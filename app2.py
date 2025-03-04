@@ -21,10 +21,12 @@ def generate_crime_data():
     end_date = datetime(2025, 2, 1)
     for i in range(1, 21):  # 20 crime cases
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
+        crime_time = random.randint(0, 23)
+        formatted_time = datetime.strptime(str(crime_time), "%H").strftime("%I:%M %p")
         data.append({
             "Case_ID": i,
             "Date": crime_date.strftime('%Y-%m-%d'),
-            "Time": random.randint(0, 23),
+            "Time": formatted_time,
             "Year": crime_date.year,
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
@@ -43,14 +45,14 @@ df["Location_Code"] = df["Location"].map(location_map)
 df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time"]])
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Year"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 st.write("AI-Detected Crime Hotspots:", df[['Case_ID', 'Location', 'Time', 'Cluster_Location']])
 
 reg = LinearRegression()
 reg.fit(df[["Year"]], df[["Time"]])
 next_crime_time = reg.predict(pd.DataFrame([[2025]], columns=["Year"]))
-st.write(f"AI Prediction: The next crime might happen at {int(next_crime_time[0][0])}:00 hours in 2025.")
+st.write(f"AI Prediction: The next crime might happen at {next_crime_time[0][0]} in 2025.")
 
 clf = DecisionTreeClassifier()
 clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
