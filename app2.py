@@ -13,6 +13,13 @@ st.set_page_config(layout="wide")  # Wide layout for better display
 st.title("🔎 Statistical Detective: AI to the Rescue")
 st.write("Solve the crime mystery using AI! Analyze the hints, make deductions, and crack the case!")
 
+# Game difficulty settings
+difficulty_levels = {"Easy": 5, "Hard": 3, "Expert": 2}
+difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
+attempts_left = difficulty_levels[difficulty]
+if "attempts" not in st.session_state or st.session_state.get("new_game", False):
+    st.session_state.attempts = attempts_left
+
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
@@ -72,6 +79,7 @@ st.write(f"🕵️ Witness reports suggest the suspect is likely in their {selec
 st.write(f"⏰ Some say they noticed unusual activity around {selected_case['Time']}.")
 st.write(f"📍 Crime occurred in a place known for {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
 
+st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
 guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
 guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
@@ -84,8 +92,9 @@ if st.button("Submit Guess", key="submit_guess"):
     correct_gender = guessed_gender == selected_case["Suspect_Gender"]
     
     if correct_location and correct_age and correct_gender:
-        st.success("🎉 Correct! You've solved the case.")
+        st.success(f"🎉 Correct! You've solved the case. Reward: 🎖 {difficulty} Level Badge")
     else:
+        st.session_state.attempts -= 1
         feedback = []
         if not correct_location:
             feedback.append("The location doesn't seem quite right...")
@@ -93,8 +102,16 @@ if st.button("Submit Guess", key="submit_guess"):
             feedback.append("The suspect's age estimate seems off...")
         if not correct_gender:
             feedback.append("Something feels different about the suspect's description...")
-        st.error("💀 Not quite! " + " ".join(feedback))
+        
+        if st.session_state.attempts > 0:
+            st.error("💀 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
+        else:
+            st.error("💀 No attempts left! The correct answer was:")
+            st.write(f"📍 Location: {selected_case['Location']}")
+            st.write(f"🕵️ Age: {selected_case['Suspect_Age']}")
+            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
 
 if st.button("🔄 New Game"):
     st.session_state.new_game = True
+    st.session_state.attempts = difficulty_levels[difficulty]
     st.rerun()
