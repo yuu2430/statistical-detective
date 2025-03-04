@@ -16,9 +16,10 @@ st.write("Solve the crime mystery using AI! Analyze the hints, make deductions, 
 # Game difficulty settings
 difficulty_levels = {"Easy": 5, "Hard": 3, "Expert": 2}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
-attempts_left = difficulty_levels[difficulty]
-if "attempts" not in st.session_state or st.session_state.get("new_game", False):
-    st.session_state.attempts = attempts_left
+if "selected_difficulty" not in st.session_state or st.session_state.selected_difficulty != difficulty:
+    st.session_state.selected_difficulty = difficulty
+    st.session_state.attempts = difficulty_levels[difficulty]
+    st.session_state.new_game = True
 
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
