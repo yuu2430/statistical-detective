@@ -88,45 +88,30 @@ df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 st.write("AI-Detected Crime Hotspots:")
 st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
-reg = LinearRegression()
-reg.fit(df[["Location_Code"]], df[["Suspect_Age"]])
-next_crime_age = reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
-st.write(f"🕵️ AI Prediction: The suspect age might be around {int(next_crime_age[0][0])} years old.")
+if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.new_game = False
 
-time_reg = LinearRegression()
-time_reg.fit(df[["Location_Code"]], df[["Time_Minutes"]])
-predicted_time_minutes = time_reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
-predicted_time = datetime.strptime(f"{int(predicted_time_minutes[0][0]) // 60}:{int(predicted_time_minutes[0][0]) % 60}", "%H:%M").strftime("%I:%M %p")
-st.write(f"⏰ AI Prediction: The next crime might happen around {predicted_time}.")
+selected_case = st.session_state.selected_case
 
-clf = DecisionTreeClassifier()
-clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
-pred_suspect = clf.predict(pd.DataFrame([[random.randint(18, 50), random.choice([0, 1])]], columns=["Suspect_Age", "Suspect_Gender"]))
-st.write(f"🧐 AI Prediction: The suspect is likely to have outcome - {pred_suspect[0]}.")
-
-difficulty = st.radio("Select Difficulty Level", ["Easy", "Hard", "Expert"], key="difficulty_level")
-attempts = 3 if difficulty == "Easy" else 2 if difficulty == "Hard" else 1
-score = 0
+st.write("🔎 AI Predictions:")
+st.write(f"🕵️ Suspect age might be around {selected_case['Suspect_Age']} years old.")
+st.write(f"⏰ Crime likely occurred around {selected_case['Time']}.")
+st.write(f"📍 Crime Location: {selected_case['Location']}")
+st.write(f"🧐 Suspect Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
 
 guessed_location = st.selectbox("Select Crime Location", list(location_map.keys()), key="crime_location")
 guessed_age = st.slider("Guess Suspect Age", 18, 50, key="suspect_age")
 guessed_gender = st.radio("Guess Suspect Gender", ["Male", "Female"], key="suspect_gender")
 guessed_gender = 0 if guessed_gender == "Male" else 1
 
-selected_case = df.sample(1).iloc[0]
-correct_location = selected_case["Location"]
-correct_age = selected_case["Suspect_Age"]
-correct_gender = selected_case["Suspect_Gender"]
-
 if st.button("Submit Guess", key="submit_guess"):
-    if guessed_location == correct_location and guessed_age == correct_age and guessed_gender == correct_gender:
+    if guessed_location == selected_case["Location"] and guessed_age == selected_case["Suspect_Age"] and guessed_gender == selected_case["Suspect_Gender"]:
         st.success("🎉 Correct! You've solved the case.")
-        score += 100
     else:
-        attempts -= 1
-        if attempts > 0:
-            st.warning(f"❌ Wrong guess! You have {attempts} attempts left.")
-        else:
-            st.error(f"💀 Game Over! The case remains unsolved. The correct answer was: Location - {correct_location}, Age - {correct_age}, Gender - {'Male' if correct_gender == 0 else 'Female'}.")
+        st.error(f"💀 Game Over! The correct answer was: Location - {selected_case['Location']}, Age - {selected_case['Suspect_Age']}, Gender - {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}.")
+        st.dataframe(df[df['Case_ID'] == selected_case['Case_ID']], use_container_width=True)
 
-st.write(f"🏆 Your final score: {score}")
+if st.button("🔄 New Game"):
+    st.session_state.new_game = True
+    st.rerun()
