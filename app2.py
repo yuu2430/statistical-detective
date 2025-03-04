@@ -47,6 +47,7 @@ def time_to_minutes(time_str):
 def minutes_to_time(minutes):
     return datetime.strptime(f"{minutes // 60}:{minutes % 60}", "%H:%M").strftime("%I:%M %p")
 
+@st.cache_data  # Cache the dataset so it doesn't change every interaction
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
     locations = ["Downtown", "City Park", "Suburbs", "Industrial Area", "Mall"]
