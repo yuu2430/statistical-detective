@@ -1,0 +1,2 @@
+app2 connected https://statistical-detective-game.streamlit.app/
+appp4 connected https://statsdetective.streamlit.app/
