@@ -19,7 +19,7 @@ def generate_crime_data():
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
-    for i in range(1, 31):  # 30 crime cases
+    for i in range(1, 21):  # 20 crime cases
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
         data.append({
             "Case_ID": i,
@@ -39,12 +39,13 @@ df = generate_crime_data()
 st.dataframe(df)
 
 location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
-df["Location"] = df["Location"].map(location_map)
+df["Location_Code"] = df["Location"].map(location_map)
 df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location", "Time"]])
-st.write("AI-Detected Crime Hotspots:", df[['Case_ID', 'Location', 'Time', 'Cluster']])
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time"]])
+df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
+st.write("AI-Detected Crime Hotspots:", df[['Case_ID', 'Location', 'Time', 'Cluster_Location']])
 
 reg = LinearRegression()
 reg.fit(df[["Year"]], df[["Time"]])
@@ -72,7 +73,7 @@ correct_age = selected_case["Suspect_Age"]
 correct_gender = selected_case["Suspect_Gender"]
 
 if st.button("Submit Guess"):
-    if guessed_location == list(location_map.keys())[correct_location] and guessed_age == correct_age and guessed_gender == correct_gender:
+    if guessed_location == correct_location and guessed_age == correct_age and guessed_gender == correct_gender:
         st.success("Correct! You've solved the case.")
         score += 100
     else:
