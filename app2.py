@@ -92,6 +92,13 @@ df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 st.write("AI-Detected Crime Hotspots:")
 st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
+# AI Prediction Hints
+model = DecisionTreeClassifier()
+model.fit(df[["Location_Code", "Suspect_Gender"]], df["Crime_Type"])
+df["Predicted_Crime"] = model.predict(df[["Location_Code", "Suspect_Gender"]])
+st.write("🔮 AI Prediction Hints:")
+st.dataframe(df[['Case_ID', 'Predicted_Crime']], use_container_width=True)
+
 difficulty = st.radio("Select Difficulty Level", ["Easy", "Hard", "Expert"], key="difficulty_level")
 attempts = 3 if difficulty == "Easy" else 2 if difficulty == "Hard" else 1
 score = 0
@@ -116,9 +123,8 @@ if st.button("Submit Guess", key="submit_guess"):
             st.warning(f"❌ Wrong guess! You have {attempts} attempts left.")
         else:
             st.error(f"💀 Game Over! The case remains unsolved.")
-            highlighted_df = df.copy()
-            highlighted_df.loc[highlighted_df['Location'] == correct_location, 'Location'] = f'**{correct_location}**'
-            st.dataframe(highlighted_df, use_container_width=True)
+            df.loc[df['Location'] == correct_location, 'Location'] = f'**{correct_location}**'
+            st.dataframe(df, use_container_width=True)
             st.write(f"🕵️ The correct answer was: Location - {correct_location}, Age - {correct_age}, Gender - {'Male' if correct_gender == 0 else 'Female'}.")
             if st.button("New Game", key="new_game"):
                 st.experimental_rerun()
