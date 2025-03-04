@@ -1,95 +1,96 @@
-import os
-os.environ["OMP_NUM_THREADS"] = "1"
-
+import os 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import random
+from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeClassifier
 
-# Title and description
-st.title("Statistical Detective: AI to the Rescue")
-st.write("Solve the crime mystery using AI and statistical models!")
+os.environ["OMP_NUM_THREADS"] = "1"
 
-# Sample dataset (fictional crime data with more randomness)
+st.set_page_config(layout="wide")  # Wide layout for better display
+
+st.title("🔎 Statistical Detective: AI to the Rescue")
+st.write("Use statistics and AI to solve crime mysteries! Analyze the data, interpret the probabilities, and catch the suspect!")
+
+# Game difficulty settings
+difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
+difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
+attempts_left = difficulty_levels[difficulty]
+if "attempts" not in st.session_state or st.session_state.get("new_game", False):
+    st.session_state.attempts = attempts_left
+
+@st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
     locations = ["Downtown", "City Park", "Suburbs", "Industrial Area", "Mall"]
     data = []
-    for i in range(1, 21):  # Increased cases for more complexity
+    start_date = datetime(2024, 1, 1)
+    end_date = datetime(2025, 2, 1)
+    for i in range(1, 21):  # Generate 20 cases
+        crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
+        crime_time_minutes = random.randint(0, 1439)
+        formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         data.append({
             "Case_ID": i,
-            "Date": 20240100 + (i * random.randint(1, 5)),
-            "Time": random.randint(18, 23),
+            "Date": crime_date.strftime('%Y-%m-%d'),
+            "Time": formatted_time,
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female"]),
             "Weapon_Used": random.choice(["Knife", "Gun", "None"]),
-            "Outcome": random.choice(["Unsolved", "Solved"])
+            "Outcome": random.choice(["Unsolved", "Solved"]),
+            "Time_Minutes": crime_time_minutes
         })
     return pd.DataFrame(data)
 
 df = generate_crime_data()
-st.dataframe(df)  # Ensuring better display of the dataset
+st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
 
-# Encoding categorical variables
-location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
-df["Location"] = df["Location"].map(location_map)
-df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
+# Select a case for the player
+if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.new_game = False
 
-# Clustering Model (K-Means for crime hotspots)
-kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location", "Time"]])
-st.write("AI-Detected Crime Hotspots:", df[['Case_ID', 'Location', 'Time', 'Cluster']])
+selected_case = st.session_state.selected_case
 
-# Regression Model (Predict next crime time based on past data)
-reg = LinearRegression()
-reg.fit(df[["Date"]], df[["Time"]])
-next_crime_time = reg.predict(pd.DataFrame([[20240130]], columns=["Date"]))
-st.write(f"AI Prediction: The next crime might happen at {int(next_crime_time[0][0])}:00 hours.")
+st.write("📊 AI Predictions Based on Past Data:")
+st.write(f"🕵️ Probability suggests the suspect is likely in their {selected_case['Suspect_Age'] // 10 * 10}s (~{random.randint(60, 80)}% confidence).")
+st.write(f"⏰ Unusual activity was reported around {selected_case['Time']}.")
+st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
-# Classification Model (Predicting suspect involvement)
-clf = DecisionTreeClassifier()
-clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
-pred_suspect = clf.predict(pd.DataFrame([[random.randint(18, 50), random.choice([0, 1])]], columns=["Suspect_Age", "Suspect_Gender"]))
-st.write(f"AI Prediction: The suspect is likely to have outcome - {pred_suspect[0]}.")
-
-# Game Difficulty Selection
-difficulty = st.selectbox("Select Difficulty Level", ["Easy", "Hard", "Expert"])
-
-# Limited Attempts & Clues
-attempts = 3 if difficulty == "Easy" else 2 if difficulty == "Hard" else 1
-score = 0
-
-# User Input (Solve the Case)
-st.write("Solve the case by guessing the crime location and suspect details!")
-guessed_location = st.selectbox("Select Crime Location", list(location_map.keys()))
-guessed_age = st.slider("Guess Suspect Age", 18, 50)
-guessed_gender = st.radio("Guess Suspect Gender", ["Male", "Female"])
+guessed_location = st.selectbox("Where did the crime occur?", df["Location"].unique(), key="crime_location")
+guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
+guessed_gender = st.radio("What is the suspect's gender?", ["Male", "Female"], key="suspect_gender")
 guessed_gender = 0 if guessed_gender == "Male" else 1
 
-# Select a random case instead of always using df.iloc[0]
-selected_case = df.sample(1).iloc[0]
-correct_location = selected_case["Location"]
-correct_age = selected_case["Suspect_Age"]
-correct_gender = selected_case["Suspect_Gender"]
-
-if st.button("Submit Guess"):
-    if guessed_location == list(location_map.keys())[correct_location] and guessed_age == correct_age and guessed_gender == correct_gender:
-        st.success("Correct! You've solved the case.")
-        score += 100
+if st.button("Submit Guess", key="submit_guess"):
+    correct_location = guessed_location == selected_case["Location"]
+    correct_age = guessed_age == selected_case["Suspect_Age"]
+    correct_gender = guessed_gender == selected_case["Suspect_Gender"]
+    
+    if correct_location and correct_age and correct_gender:
+        st.success(f"🎉 Correct! You've solved the case. Reward: 🎖 {difficulty} Level Badge")
     else:
-        attempts -= 1
-        if attempts > 0:
-            st.warning(f"Wrong guess! You have {attempts} attempts left.")
-            if difficulty == "Easy":
-                st.info("Hint: The crime location is near a popular area.")
+        st.session_state.attempts -= 1
+        feedback = []
+        if not correct_location:
+            feedback.append("The location probability suggests another area...")
+        if not correct_age:
+            feedback.append("The age probability doesn't align with the data...")
+        if not correct_gender:
+            feedback.append("Gender statistics indicate a different suspect...")
+        
+        if st.session_state.attempts > 0:
+            st.error("💀 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
         else:
-            st.error("Game Over! The case remains unsolved.")
+            st.error("💀 No attempts left! The correct answer was:")
+            st.write(f"📍 Location: {selected_case['Location']}")
+            st.write(f"🕵️ Age: {selected_case['Suspect_Age']}")
+            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
 
-st.write(f"Your final score: {score}")
-
-st.write("Use AI and your detective skills to crack the mystery!")
+if st.button("🔄 New Game"):
+    st.session_state.new_game = True
+    st.session_state.attempts = difficulty_levels[difficulty]
+    st.rerun()
