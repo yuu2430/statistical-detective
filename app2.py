@@ -81,8 +81,16 @@ df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
+
+cluster_hints = {
+    "High-Risk Zone A": "Frequent night-time crimes, often involve armed suspects.",
+    "High-Risk Zone B": "Daylight crimes, usually fraud or pickpocketing.",
+    "High-Risk Zone C": "Suburban area, burglary cases more common."
+}
+
+df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 st.write("AI-Detected Crime Hotspots:")
-st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location']], use_container_width=True)
+st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
 reg = LinearRegression()
 reg.fit(df[["Time_Minutes"]], df[["Location_Code"]])
