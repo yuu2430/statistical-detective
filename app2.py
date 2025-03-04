@@ -10,6 +10,8 @@ from sklearn.tree import DecisionTreeClassifier
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
+st.set_page_config(layout="wide")  # Set the layout to wide mode
+
 st.title("Statistical Detective: AI to the Rescue")
 st.write("Solve the crime mystery using AI and statistical models!")
 
@@ -35,7 +37,6 @@ def generate_crime_data():
             "Date": crime_date.strftime('%Y-%m-%d'),
             "Time": formatted_time,
             "Time_Minutes": time_to_minutes(formatted_time),
-            "Year": crime_date.year,
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
             "Suspect_Age": random.randint(18, 50),
@@ -46,22 +47,22 @@ def generate_crime_data():
     return pd.DataFrame(data)
 
 df = generate_crime_data()
-st.dataframe(df)
+st.dataframe(df, width=0.7 * st.get_option("server.maxUploadSize"))
 
 location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
 df["Location_Code"] = df["Location"].map(location_map)
 df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Year"]])
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 st.write("AI-Detected Crime Hotspots:", df[['Case_ID', 'Location', 'Time', 'Cluster_Location']])
 
 reg = LinearRegression()
-reg.fit(df[["Year"]], df[["Time_Minutes"]])
-next_crime_minutes = reg.predict(pd.DataFrame([[2025]], columns=["Year"]))
+reg.fit(df[["Time_Minutes"]], df[["Location_Code"]])
+next_crime_minutes = reg.predict(pd.DataFrame([[time_to_minutes("12:00 PM")]], columns=["Time_Minutes"]))
 next_crime_time = minutes_to_time(int(next_crime_minutes[0][0]))
-st.write(f"AI Prediction: The next crime might happen at {next_crime_time} in 2025.")
+st.write(f"AI Prediction: The next crime might happen at {next_crime_time}.")
 
 clf = DecisionTreeClassifier()
 clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
@@ -72,13 +73,12 @@ difficulty = st.selectbox("Select Difficulty Level", ["Easy", "Hard", "Expert"])
 attempts = 3 if difficulty == "Easy" else 2 if difficulty == "Hard" else 1
 score = 0
 
-guessed_year = st.selectbox("Select Crime Year", sorted(df["Year"].unique()))
 guessed_location = st.selectbox("Select Crime Location", list(location_map.keys()))
 guessed_age = st.slider("Guess Suspect Age", 18, 50)
 guessed_gender = st.radio("Guess Suspect Gender", ["Male", "Female"])
 guessed_gender = 0 if guessed_gender == "Male" else 1
 
-selected_case = df[df["Year"] == guessed_year].sample(1).iloc[0]
+selected_case = df.sample(1).iloc[0]
 correct_location = selected_case["Location"]
 correct_age = selected_case["Suspect_Age"]
 correct_gender = selected_case["Suspect_Gender"]
