@@ -47,7 +47,7 @@ def generate_crime_data():
     return pd.DataFrame(data)
 
 df = generate_crime_data()
-st.dataframe(df, width=0.7 * st.get_option("server.maxUploadSize"))
+st.dataframe(df, use_container_width=True)  # Use full available width
 
 location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
 df["Location_Code"] = df["Location"].map(location_map)
@@ -56,12 +56,13 @@ df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
-st.write("AI-Detected Crime Hotspots:", df[['Case_ID', 'Location', 'Time', 'Cluster_Location']])
+st.write("AI-Detected Crime Hotspots:")
+st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location']], use_container_width=True)
 
 reg = LinearRegression()
 reg.fit(df[["Time_Minutes"]], df[["Location_Code"]])
 next_crime_minutes = reg.predict(pd.DataFrame([[time_to_minutes("12:00 PM")]], columns=["Time_Minutes"]))
-next_crime_time = minutes_to_time(int(next_crime_minutes[0][0]))
+next_crime_time = minutes_to_time(max(0, min(1439, int(next_crime_minutes[0][0]))))  # Ensure valid time range
 st.write(f"AI Prediction: The next crime might happen at {next_crime_time}.")
 
 clf = DecisionTreeClassifier()
