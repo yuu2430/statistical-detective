@@ -10,26 +10,31 @@ from sklearn.tree import DecisionTreeClassifier
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-st.set_page_config(layout="wide")  # Set the layout to wide mode
+st.set_page_config(layout="centered")  # Adjust layout to centered
 
 st.markdown("""
     <style>
         body {
-            background-color: #1a1a2e;
-            color: #e94560;
+            background-color: #5c3038;
+            color: #cccccc;
         }
         .stButton>button {
-            background-color: #0f3460;
+            background-color: #d25b5b;
             color: white;
             border-radius: 10px;
         }
         .stSelectbox, .stSlider, .stRadio {
             color: white;
         }
+        .main {
+            background-color: #640404;
+            border-radius: 15px;
+            padding: 20px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Statistical Detective: AI to the Rescue")
+st.title("🔎 Statistical Detective: AI to the Rescue")
 st.write("Solve the crime mystery using AI and statistical models!")
 
 def time_to_minutes(time_str):
@@ -64,7 +69,7 @@ def generate_crime_data():
     return pd.DataFrame(data)
 
 df = generate_crime_data()
-st.dataframe(df, use_container_width=True)  # Use full available width
+st.dataframe(df, use_container_width=True)
 
 location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
 df["Location_Code"] = df["Location"].map(location_map)
@@ -79,7 +84,7 @@ st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location']], use_contai
 reg = LinearRegression()
 reg.fit(df[["Time_Minutes"]], df[["Location_Code"]])
 next_crime_minutes = reg.predict(pd.DataFrame([[time_to_minutes("12:00 PM")]], columns=["Time_Minutes"]))
-next_crime_time = minutes_to_time(max(0, min(1439, int(next_crime_minutes[0][0]))))  # Ensure valid time range
+next_crime_time = minutes_to_time(max(0, min(1439, int(next_crime_minutes[0][0]))))
 st.write(f"AI Prediction: The next crime might happen at {next_crime_time}.")
 
 clf = DecisionTreeClassifier()
