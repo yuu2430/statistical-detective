@@ -70,7 +70,7 @@ st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hin
 
 # Visualizing Crime Distribution
 st.write("🔍 Crime Distribution Analysis")
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(6, 4))  # Adjust figure size to take up about 40% of the window
 df["Crime_Type"].value_counts().plot(kind='bar', color='skyblue', ax=ax)
 ax.set_xlabel("Crime Type")
 ax.set_ylabel("Frequency")
