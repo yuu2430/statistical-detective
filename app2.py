@@ -62,7 +62,6 @@ def generate_crime_data():
             "Case_ID": i,
             "Date": crime_date.strftime('%Y-%m-%d'),
             "Time": formatted_time,
-            "Time_Minutes": time_to_minutes(formatted_time),
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
             "Suspect_Age": random.randint(18, 50),
@@ -73,14 +72,14 @@ def generate_crime_data():
     return pd.DataFrame(data)
 
 df = generate_crime_data()
-st.dataframe(df, use_container_width=True)
+st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
 
 location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
 df["Location_Code"] = df["Location"].map(location_map)
 df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
 cluster_hints = {
@@ -94,10 +93,9 @@ st.write("AI-Detected Crime Hotspots:")
 st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
 reg = LinearRegression()
-reg.fit(df[["Time_Minutes"]], df[["Location_Code"]])
-next_crime_minutes = reg.predict(pd.DataFrame([[time_to_minutes("12:00 PM")]], columns=["Time_Minutes"]))
-next_crime_time = minutes_to_time(max(0, min(1439, int(next_crime_minutes[0][0]))))
-st.write(f"AI Prediction: The next crime might happen at {next_crime_time}.")
+reg.fit(df[["Location_Code"]], df[["Suspect_Age"]])
+next_crime_age = reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
+st.write(f"AI Prediction: The suspect age might be around {int(next_crime_age[0][0])} years old.")
 
 clf = DecisionTreeClassifier()
 clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
