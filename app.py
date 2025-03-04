@@ -29,24 +29,20 @@ def generate_crime_data():
     end_date = datetime(2025, 2, 1)
     for i in range(1, 21):  # Generate 20 cases
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
-        crime_time_minutes = random.randint(0, 1439)
-        formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         data.append({
             "Case_ID": i,
             "Date": crime_date.strftime('%Y-%m-%d'),
-            "Time": formatted_time,
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female"]),
             "Weapon_Used": random.choice(["Knife", "Gun", "None"]),
-            "Outcome": random.choice(["Unsolved", "Solved"]),
-            "Time_Minutes": crime_time_minutes
+            "Outcome": random.choice(["Unsolved", "Solved"])
         })
     return pd.DataFrame(data)
 
 df = generate_crime_data()
-st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
+st.dataframe(df, use_container_width=True)
 
 # Select a case for the player
 if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
@@ -57,7 +53,6 @@ selected_case = st.session_state.selected_case
 
 st.write("📊 AI Predictions Based on Past Data:")
 st.write(f"🕵️ Probability suggests the suspect is likely in their {selected_case['Suspect_Age'] // 10 * 10}s (~{random.randint(60, 80)}% confidence).")
-st.write(f"⏰ Unusual activity was reported around {selected_case['Time']}.")
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
 guessed_location = st.selectbox("Where did the crime occur?", df["Location"].unique(), key="crime_location")
@@ -68,7 +63,7 @@ guessed_gender = 0 if guessed_gender == "Male" else 1
 if st.button("Submit Guess", key="submit_guess"):
     correct_location = guessed_location == selected_case["Location"]
     correct_age = guessed_age == selected_case["Suspect_Age"]
-    correct_gender = guessed_gender == selected_case["Suspect_Gender"]
+    correct_gender = guessed_gender == (0 if selected_case["Suspect_Gender"] == "Male" else 1)
     
     if correct_location and correct_age and correct_gender:
         st.success(f"🎉 Correct! You've solved the case. Reward: 🎖 {difficulty} Level Badge")
@@ -88,7 +83,7 @@ if st.button("Submit Guess", key="submit_guess"):
             st.error("💀 No attempts left! The correct answer was:")
             st.write(f"📍 Location: {selected_case['Location']}")
             st.write(f"🕵️ Age: {selected_case['Suspect_Age']}")
-            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+            st.write(f"👤 Gender: {selected_case['Suspect_Gender']}")
 
 if st.button("🔄 New Game"):
     st.session_state.new_game = True
