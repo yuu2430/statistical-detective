@@ -10,7 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-st.set_page_config(layout="centered")  # Adjust layout to centered
+st.set_page_config(layout="wide")  # Adjust layout to wide for better readability
 
 st.markdown("""
     <style>
@@ -30,6 +30,14 @@ st.markdown("""
             background-color: #640404;
             border-radius: 15px;
             padding: 20px;
+        }
+        .stDataFrame {
+            width: 70% !important;  /* Ensure dataset table takes up 70% of the window */
+        }
+        .block-container {
+            background-color: #a07272;
+            padding: 20px;
+            border-radius: 15px;
         }
     </style>
 """, unsafe_allow_html=True)
