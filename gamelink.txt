@@ -1,2 +1,3 @@
 app2 connected https://statistical-detective-game.streamlit.app/
 appp4 connected https://statsdetective.streamlit.app/
+app connected https://statsai.streamlit.app/ (this doesnt show the ai detected hotspots)
