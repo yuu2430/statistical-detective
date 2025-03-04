@@ -12,6 +12,23 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 st.set_page_config(layout="wide")  # Set the layout to wide mode
 
+st.markdown("""
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #e94560;
+        }
+        .stButton>button {
+            background-color: #0f3460;
+            color: white;
+            border-radius: 10px;
+        }
+        .stSelectbox, .stSlider, .stRadio {
+            color: white;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("Statistical Detective: AI to the Rescue")
 st.write("Solve the crime mystery using AI and statistical models!")
 
@@ -70,13 +87,13 @@ clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
 pred_suspect = clf.predict(pd.DataFrame([[random.randint(18, 50), random.choice([0, 1])]], columns=["Suspect_Age", "Suspect_Gender"]))
 st.write(f"AI Prediction: The suspect is likely to have outcome - {pred_suspect[0]}.")
 
-difficulty = st.selectbox("Select Difficulty Level", ["Easy", "Hard", "Expert"])
+difficulty = st.selectbox("Select Difficulty Level", ["Easy", "Hard", "Expert"], key="difficulty_level")
 attempts = 3 if difficulty == "Easy" else 2 if difficulty == "Hard" else 1
 score = 0
 
-guessed_location = st.selectbox("Select Crime Location", list(location_map.keys()))
-guessed_age = st.slider("Guess Suspect Age", 18, 50)
-guessed_gender = st.radio("Guess Suspect Gender", ["Male", "Female"])
+guessed_location = st.selectbox("Select Crime Location", list(location_map.keys()), key="crime_location")
+guessed_age = st.slider("Guess Suspect Age", 18, 50, key="suspect_age")
+guessed_gender = st.radio("Guess Suspect Gender", ["Male", "Female"], key="suspect_gender")
 guessed_gender = 0 if guessed_gender == "Male" else 1
 
 selected_case = df.sample(1).iloc[0]
@@ -84,7 +101,7 @@ correct_location = selected_case["Location"]
 correct_age = selected_case["Suspect_Age"]
 correct_gender = selected_case["Suspect_Gender"]
 
-if st.button("Submit Guess"):
+if st.button("Submit Guess", key="submit_guess"):
     if guessed_location == correct_location and guessed_age == correct_age and guessed_gender == correct_gender:
         st.success("Correct! You've solved the case.")
         score += 100
