@@ -15,30 +15,32 @@ st.set_page_config(layout="wide")  # Adjust layout to wide for better readabilit
 st.markdown("""
     <style>
         body {
-            background-color: #5c3038;
-            color: #cccccc;
+            background-color: #2c2f33;
+            color: #ffffff;
         }
         .stButton>button {
-            background-color: #d25b5b;
+            background-color: #7289da;
             color: white;
             border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
         }
         .stSelectbox, .stSlider, .stRadio {
             color: white;
         }
         .main {
-            background-color: #640404;
+            background-color: #23272a;
             border-radius: 15px;
             padding: 20px;
         }
         .stDataFrame {
-            width: 70% !important;  /* Ensure dataset table takes up 70% of the window */
+            width: 80% !important;  /* Ensure dataset table takes up 80% of the window */
         }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("🔎 Statistical Detective: AI to the Rescue")
-st.write("Solve the crime mystery using AI and statistical models!")
+st.write("Solve the crime mystery using AI and statistical models! Use the hints and predictions to crack the case!")
 
 @st.cache_data  # Cache the dataset so it doesn't change every interaction
 def generate_crime_data():
@@ -89,20 +91,20 @@ st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hin
 reg = LinearRegression()
 reg.fit(df[["Location_Code"]], df[["Suspect_Age"]])
 next_crime_age = reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
-st.write(f"AI Prediction: The suspect age might be around {int(next_crime_age[0][0])} years old.")
+st.write(f"🕵️ AI Prediction: The suspect age might be around {int(next_crime_age[0][0])} years old.")
 
 time_reg = LinearRegression()
 time_reg.fit(df[["Location_Code"]], df[["Time_Minutes"]])
 predicted_time_minutes = time_reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
 predicted_time = datetime.strptime(f"{int(predicted_time_minutes[0][0]) // 60}:{int(predicted_time_minutes[0][0]) % 60}", "%H:%M").strftime("%I:%M %p")
-st.write(f"AI Prediction: The next crime might happen around {predicted_time}.")
+st.write(f"⏰ AI Prediction: The next crime might happen around {predicted_time}.")
 
 clf = DecisionTreeClassifier()
 clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
 pred_suspect = clf.predict(pd.DataFrame([[random.randint(18, 50), random.choice([0, 1])]], columns=["Suspect_Age", "Suspect_Gender"]))
-st.write(f"AI Prediction: The suspect is likely to have outcome - {pred_suspect[0]}.")
+st.write(f"🧐 AI Prediction: The suspect is likely to have outcome - {pred_suspect[0]}.")
 
-difficulty = st.selectbox("Select Difficulty Level", ["Easy", "Hard", "Expert"], key="difficulty_level")
+difficulty = st.radio("Select Difficulty Level", ["Easy", "Hard", "Expert"], key="difficulty_level")
 attempts = 3 if difficulty == "Easy" else 2 if difficulty == "Hard" else 1
 score = 0
 
@@ -118,16 +120,13 @@ correct_gender = selected_case["Suspect_Gender"]
 
 if st.button("Submit Guess", key="submit_guess"):
     if guessed_location == correct_location and guessed_age == correct_age and guessed_gender == correct_gender:
-        st.success("Correct! You've solved the case.")
+        st.success("🎉 Correct! You've solved the case.")
         score += 100
     else:
         attempts -= 1
         if attempts > 0:
-            st.warning(f"Wrong guess! You have {attempts} attempts left.")
-            if difficulty == "Easy":
-                st.info("Hint: The crime happened in an area with previous reports.")
+            st.warning(f"❌ Wrong guess! You have {attempts} attempts left.")
         else:
-            st.error("Game Over! The case remains unsolved.")
+            st.error(f"💀 Game Over! The case remains unsolved. The correct answer was: Location - {correct_location}, Age - {correct_age}, Gender - {'Male' if correct_gender == 0 else 'Female'}.")
 
-st.write(f"Your final score: {score}")
-st.write("Use AI and your detective skills to crack the mystery!")
+st.write(f"🏆 Your final score: {score}")
