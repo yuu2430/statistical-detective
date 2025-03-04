@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import random
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 
@@ -67,15 +66,6 @@ cluster_hints = {
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 st.write("📊 AI-Detected Crime Hotspots:")
 st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
-
-# Visualizing Crime Distribution
-st.write("🔍 Crime Distribution Analysis")
-fig, ax = plt.subplots(figsize=(6, 4))  # Adjust figure size to take up about 40% of the window
-df["Crime_Type"].value_counts().plot(kind='bar', color='skyblue', ax=ax)
-ax.set_xlabel("Crime Type")
-ax.set_ylabel("Frequency")
-ax.set_title("Crime Type Distribution")
-st.pyplot(fig)
 
 # Select a case for the player
 if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
