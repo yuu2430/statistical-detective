@@ -13,6 +13,13 @@ os.environ["OMP_NUM_THREADS"] = "1"
 st.title("Statistical Detective: AI to the Rescue")
 st.write("Solve the crime mystery using AI and statistical models!")
 
+def time_to_minutes(time_str):
+    dt = datetime.strptime(time_str, "%I:%M %p")
+    return dt.hour * 60 + dt.minute
+
+def minutes_to_time(minutes):
+    return datetime.strptime(f"{minutes // 60}:{minutes % 60}", "%H:%M").strftime("%I:%M %p")
+
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
     locations = ["Downtown", "City Park", "Suburbs", "Industrial Area", "Mall"]
@@ -27,6 +34,7 @@ def generate_crime_data():
             "Case_ID": i,
             "Date": crime_date.strftime('%Y-%m-%d'),
             "Time": formatted_time,
+            "Time_Minutes": time_to_minutes(formatted_time),
             "Year": crime_date.year,
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
@@ -50,9 +58,10 @@ df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk
 st.write("AI-Detected Crime Hotspots:", df[['Case_ID', 'Location', 'Time', 'Cluster_Location']])
 
 reg = LinearRegression()
-reg.fit(df[["Year"]], df[["Time"]])
-next_crime_time = reg.predict(pd.DataFrame([[2025]], columns=["Year"]))
-st.write(f"AI Prediction: The next crime might happen at {next_crime_time[0][0]} in 2025.")
+reg.fit(df[["Year"]], df[["Time_Minutes"]])
+next_crime_minutes = reg.predict(pd.DataFrame([[2025]], columns=["Year"]))
+next_crime_time = minutes_to_time(int(next_crime_minutes[0][0]))
+st.write(f"AI Prediction: The next crime might happen at {next_crime_time} in 2025.")
 
 clf = DecisionTreeClassifier()
 clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
