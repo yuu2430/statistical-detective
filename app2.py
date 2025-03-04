@@ -34,11 +34,6 @@ st.markdown("""
         .stDataFrame {
             width: 70% !important;  /* Ensure dataset table takes up 70% of the window */
         }
-        .block-container {
-            background-color: #a07272;
-            padding: 20px;
-            border-radius: 15px;
-        }
     </style>
 """, unsafe_allow_html=True)
 
