@@ -1,0 +1,6 @@
+git init  # Initialize Git in the folder
+git branch -M main  # Create and set the branch name to 'main'
+git add .  # Add all files
+git commit -m "Initial commit"  # Commit the changes
+git remote add origin https://github.com/yuu2430/statistical-detective.git  # Link your GitHub repo
+git push -u origin main  # Push the code to GitHub
