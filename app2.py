@@ -71,7 +71,7 @@ st.write("🔎 AI Predictions:")
 st.write(f"🕵️ Witness reports suggest the suspect is likely in their {selected_case['Suspect_Age'] // 10 * 10}s.")
 st.write(f"⏰ Some say they noticed unusual activity around {selected_case['Time']}.")
 st.write(f"📍 Crime occurred in a place known for {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
-st.write(f"🧐 The suspect might be {'a man' if selected_case['Suspect_Gender'] == 0 else 'a woman'}, based on past reports.")
+
 
 guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
 guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
