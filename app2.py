@@ -34,11 +34,7 @@ st.markdown("""
             padding: 20px;
         }
         .stDataFrame {
-            width: 80% !important;
-        }
-        .highlight {
-            background-color: #ffcccb;
-            font-weight: bold;
+            width: 80% !important;  /* Ensure dataset table takes up 80% of the window */
         }
     </style>
 """, unsafe_allow_html=True)
@@ -92,12 +88,21 @@ df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 st.write("AI-Detected Crime Hotspots:")
 st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
-# AI Prediction Hints
-model = DecisionTreeClassifier()
-model.fit(df[["Location_Code", "Suspect_Gender"]], df["Crime_Type"])
-df["Predicted_Crime"] = model.predict(df[["Location_Code", "Suspect_Gender"]])
-st.write("🔮 AI Prediction Hints:")
-st.dataframe(df[['Case_ID', 'Predicted_Crime']], use_container_width=True)
+reg = LinearRegression()
+reg.fit(df[["Location_Code"]], df[["Suspect_Age"]])
+next_crime_age = reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
+st.write(f"🕵️ AI Prediction: The suspect age might be around {int(next_crime_age[0][0])} years old.")
+
+time_reg = LinearRegression()
+time_reg.fit(df[["Location_Code"]], df[["Time_Minutes"]])
+predicted_time_minutes = time_reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
+predicted_time = datetime.strptime(f"{int(predicted_time_minutes[0][0]) // 60}:{int(predicted_time_minutes[0][0]) % 60}", "%H:%M").strftime("%I:%M %p")
+st.write(f"⏰ AI Prediction: The next crime might happen around {predicted_time}.")
+
+clf = DecisionTreeClassifier()
+clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
+pred_suspect = clf.predict(pd.DataFrame([[random.randint(18, 50), random.choice([0, 1])]], columns=["Suspect_Age", "Suspect_Gender"]))
+st.write(f"🧐 AI Prediction: The suspect is likely to have outcome - {pred_suspect[0]}.")
 
 difficulty = st.radio("Select Difficulty Level", ["Easy", "Hard", "Expert"], key="difficulty_level")
 attempts = 3 if difficulty == "Easy" else 2 if difficulty == "Hard" else 1
@@ -122,11 +127,6 @@ if st.button("Submit Guess", key="submit_guess"):
         if attempts > 0:
             st.warning(f"❌ Wrong guess! You have {attempts} attempts left.")
         else:
-            st.error(f"💀 Game Over! The case remains unsolved.")
-            df.loc[df['Location'] == correct_location, 'Location'] = f'**{correct_location}**'
-            st.dataframe(df, use_container_width=True)
-            st.write(f"🕵️ The correct answer was: Location - {correct_location}, Age - {correct_age}, Gender - {'Male' if correct_gender == 0 else 'Female'}.")
-            if st.button("New Game", key="new_game"):
-                st.experimental_rerun()
+            st.error(f"💀 Game Over! The case remains unsolved. The correct answer was: Location - {correct_location}, Age - {correct_age}, Gender - {'Male' if correct_gender == 0 else 'Female'}.")
 
 st.write(f"🏆 Your final score: {score}")
