@@ -40,13 +40,6 @@ st.markdown("""
 st.title("🔎 Statistical Detective: AI to the Rescue")
 st.write("Solve the crime mystery using AI and statistical models!")
 
-def time_to_minutes(time_str):
-    dt = datetime.strptime(time_str, "%I:%M %p")
-    return dt.hour * 60 + dt.minute
-
-def minutes_to_time(minutes):
-    return datetime.strptime(f"{minutes // 60}:{minutes % 60}", "%H:%M").strftime("%I:%M %p")
-
 @st.cache_data  # Cache the dataset so it doesn't change every interaction
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
@@ -56,8 +49,8 @@ def generate_crime_data():
     end_date = datetime(2025, 2, 1)
     for i in range(1, 21):  # 20 crime cases
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
-        crime_time = random.randint(0, 23)
-        formatted_time = datetime.strptime(str(crime_time), "%H").strftime("%I:%M %p")
+        crime_time_minutes = random.randint(0, 1439)
+        formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         data.append({
             "Case_ID": i,
             "Date": crime_date.strftime('%Y-%m-%d'),
@@ -67,7 +60,8 @@ def generate_crime_data():
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female"]),
             "Weapon_Used": random.choice(["Knife", "Gun", "None"]),
-            "Outcome": random.choice(["Unsolved", "Solved"])
+            "Outcome": random.choice(["Unsolved", "Solved"]),
+            "Time_Minutes": crime_time_minutes
         })
     return pd.DataFrame(data)
 
@@ -96,6 +90,12 @@ reg = LinearRegression()
 reg.fit(df[["Location_Code"]], df[["Suspect_Age"]])
 next_crime_age = reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
 st.write(f"AI Prediction: The suspect age might be around {int(next_crime_age[0][0])} years old.")
+
+time_reg = LinearRegression()
+time_reg.fit(df[["Location_Code"]], df[["Time_Minutes"]])
+predicted_time_minutes = time_reg.predict(pd.DataFrame([[random.randint(0, 4)]], columns=["Location_Code"]))
+predicted_time = datetime.strptime(f"{int(predicted_time_minutes[0][0]) // 60}:{int(predicted_time_minutes[0][0]) % 60}", "%H:%M").strftime("%I:%M %p")
+st.write(f"AI Prediction: The next crime might happen around {predicted_time}.")
 
 clf = DecisionTreeClassifier()
 clf.fit(df[["Suspect_Age", "Suspect_Gender"]], df["Outcome"])
