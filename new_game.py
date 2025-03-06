@@ -75,6 +75,7 @@ def generate_case():
         "evidence": evidence
     }
 
+# Initialize game case if not set or when user requests a new one
 if "case" not in st.session_state or st.button("🔄 New Case"):
     st.session_state.case = generate_case()
 case = st.session_state.case
@@ -121,6 +122,7 @@ for title, detail in case["evidence"].items():
 
 st.subheader("🕵️ Logical Analysis")
 user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
+
 if st.button("🔒 Submit Final Answer"):
     correct = user_guess == case["true_culprit"]
     weapon = generate_crime_types()[case["crime"]]["weapon"]
@@ -135,4 +137,10 @@ if st.button("🔒 Submit Final Answer"):
     elif correct:
         st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
     else:
-        st.error("❌ Incorrect. The truth hides in: Occupation-Weapon match + Typical schedule")
+        # When wrong, reveal the culprit and end the game.
+        st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**. "
+                 "The game is now over.")
+        # Provide a button to start a new game.
+        if st.button("Play Again"):
+            st.session_state.case = generate_case()
+            st.experimental_rerun()
