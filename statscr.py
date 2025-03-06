@@ -168,6 +168,7 @@ question_list = [
     "Can anyone vouch for your alibi?"
 ]
 
+# Introduce more ambiguous interrogation responses
 responses = {
     "Where were you last night?": {
         "Culprit": {"answer": "I was at home... though I did step out briefly. Someone might have seen me.", "cue": "😬 (Evasive)"},
@@ -178,4 +179,54 @@ responses = {
         "Decoy": {"answer": "Yes, we worked together at times.", "cue": "😊 (Relaxed)"}
     },
     "What were you doing at the crime scene?": {
-        "Culprit": {"answer": "I happened to be nearby;
+        "Culprit": {"answer": "I happened to be nearby; it's a coincidence.", "cue": "😕 (Ambiguous)"},
+        "Decoy": {"answer": "I wasn't anywhere near that area.", "cue": "😎 (Assertive)"}
+    },
+    "Can anyone vouch for your alibi?": {
+        "Culprit": {"answer": "Not really, I was alone.", "cue": "😐 (Nervous)"},
+        "Decoy": {"answer": "Yes, several people saw me.", "cue": "😇 (Confident)"}
+    }
+}
+
+suspect_names = [s["Name"] for s in st.session_state.suspects]
+selected_suspect_name = st.selectbox("Select a suspect to interrogate:", suspect_names, key="suspect_select")
+selected_suspect = next(s for s in st.session_state.suspects if s["Name"] == selected_suspect_name)
+selected_question = st.selectbox("Select a question to ask:", question_list, key="question_select")
+
+if st.button("🎙️ Ask Question"):
+    role = selected_suspect["Role"]
+    reply = responses[selected_question][role]
+    st.write(f"🕵️ {selected_suspect['Name']} answers: {reply['answer']} {reply['cue']}")
+
+# ---------- AI-Assisted Crime Pattern Detection ----------
+st.subheader("📊 AI Crime Analysis")
+location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
+df["Location_Code"] = df["Location"].map(location_map)
+
+weapon_map = {"Knife": 0, "Gun": 1, "None": 2}
+df["Weapon_Code"] = df["Weapon_Used"].map(weapon_map)
+
+# Cluster using both location and weapon information.
+kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Weapon_Code"]])
+df['Cluster_Location'] = df['Cluster'].map({0: "Hotspot A", 1: "Hotspot B", 2: "Hotspot C"})
+
+zone_hint = df[df['Location'] == selected_case['Location']]['Cluster_Location'].values[0]
+st.write(f"📍 Crime Zone: {zone_hint}")
+st.write("📈 AI analysis indicates a high probability of recurring crimes in this area.")
+
+# ---------- Make the Final Guess ----------
+st.subheader("🕵️‍♂️ Make Your Final Guess")
+final_guess = st.selectbox("Who is the culprit?", suspect_names, key="final_guess")
+if st.button("🚔 Submit Arrest Warrant"):
+    culprit = next(s for s in st.session_state.suspects if s["Role"] == "Culprit")
+    if final_guess == culprit["Name"]:
+        st.success(f"🎉 You solved the case! {culprit['Name']} has been arrested.")
+    else:
+        st.error("❌ Wrong suspect! The real culprit is still at large. Re-examine the clues and interrogations.")
+
+# ---------- Restart Game ----------
+if st.button("🔄 New Case"):
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.suspects = generate_suspects(st.session_state.selected_case)
+    st.experimental_rerun()
