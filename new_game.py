@@ -101,7 +101,8 @@ if st.button("🔒 Submit Final Answer"):
         st.error("❌ Incorrect. The game has ended.")
     
     st.write(f"🏆 Your current score: {st.session_state.score}")
-    
-    if st.button("🔄 New Case"):
-        st.session_state.case = generate_case()
-        st.rerun()
+
+# ---------- New Case Button (Always Visible) ----------
+if st.button("🔄 New Case"):
+    st.session_state.case = generate_case()
+    st.rerun()
