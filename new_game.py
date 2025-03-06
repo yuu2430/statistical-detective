@@ -37,20 +37,17 @@ time_consistency = {
 @st.cache_data
 def generate_case():
     crime_name, details = random.choice(list(crime_types.items()))
+    time_window = {"evening": "6:00 PM - 8:00 PM", "night": "10:00 PM - 12:00 AM", "afternoon": "2:00 PM - 4:00 PM"}
     
     shuffled_occupations = random.sample(possible_occupations, len(possible_occupations))
     shuffled_connections = random.sample(possible_connections, len(possible_connections))
-    shuffled_suspect_names = random.sample(["Alex", "Sam", "Jordan", "Taylor", "Casey"], 5)
     
     suspects = {
-        shuffled_suspect_names[i]: {
-            "occupation": shuffled_occupations[i],
-            "connection": shuffled_connections[i]
-        } for i in range(5)
+        name: {"occupation": shuffled_occupations[i], "connection": shuffled_connections[i]}
+        for i, name in enumerate(random.sample(["Alex", "Sam", "Jordan", "Taylor", "Casey"], 5))
     }
     
     culprit = random.choice(list(suspects.keys()))
-    
     evidence = {
         "Security Footage": f"Blurry figure wearing {random.choice(['red', 'blue', 'black'])} jacket",
         "Tool Markings": f"Matches {details['weapon']} found in {random.choice(['parking lot', 'storage room'])}",
@@ -61,22 +58,40 @@ def generate_case():
     return {
         "crime": crime_name,
         "location": details["location"],
-        "time_window": details["time"],
+        "time_window": time_window[details["time"]],
         "true_culprit": culprit,
         "suspects": suspects,
         "evidence": evidence
     }
 
-if "case" not in st.session_state or "restart" in st.session_state:
+# Reset case on refresh or button press
+if "case" not in st.session_state or st.session_state.get("new_case", False):
     st.session_state.case = generate_case()
-    st.session_state.pop("restart", None)  # Reset restart flag
-    st.rerun()
+    st.session_state.new_case = False
 
 case = st.session_state.case
+
+def calculate_probabilities(case):
+    suspects = case["suspects"]
+    weapon = crime_types[case["crime"]]["weapon"]
+    time_period = crime_types[case["crime"]]["time"]
+    
+    for name, info in suspects.items():
+        probability = 0
+        if occupation_weapon[info["occupation"]] == weapon:
+            probability += 30
+        if info["occupation"] in time_consistency[time_period]:
+            probability += 20
+        suspects[name]["probability"] = min(probability, 100)
+    
+    return suspects
+
+case["suspects"] = calculate_probabilities(case)
 
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
 
+st.subheader("👥 Persons of Interest")
 shuffled_suspect_names = random.sample(list(case["suspects"].keys()), len(case["suspects"]))
 cols = st.columns(len(shuffled_suspect_names))
 
@@ -100,16 +115,21 @@ for title, detail in case["evidence"].items():
         st.write(detail + " (Could match multiple suspects)")
 
 st.subheader("🕵️ Logical Analysis")
-
 user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
+
 if st.button("🔒 Submit Final Answer"):
     correct = user_guess == case["true_culprit"]
-    if correct:
-        st.success("🎉 Correct! You identified the culprit!")
+    occupation_match = occupation_weapon[case["suspects"][case["true_culprit"]]["occupation"]] == crime_types[case["crime"]]["weapon"]
+    time_match = case["suspects"][case["true_culprit"]]["occupation"] in time_consistency[crime_types[case["crime"]]["time"]]
+    
+    if correct and occupation_match and time_match:
+        st.success("🎉 Perfect deduction! You identified the hidden patterns!")
         st.balloons()
+    elif correct:
+        st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
     else:
-        st.error(f"❌ Incorrect! The culprit was {case['true_culprit']}")
+        st.error("❌ Incorrect. The truth hides in: Occupation-Weapon match + Typical schedule")
 
 if st.button("🔄 New Case"):
-    st.session_state.restart = True
+    st.session_state.new_case = True
     st.rerun()
