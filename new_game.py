@@ -1,5 +1,9 @@
 import streamlit as st
 import random
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import LabelEncoder
 
 st.set_page_config(layout="wide")
 
@@ -58,48 +62,37 @@ if "score" not in st.session_state:
 
 case = st.session_state.case
 
-# ---------- Calculate Probabilities ----------
-def calculate_probabilities(case):
+# ---------- Machine Learning Model ----------
+def train_model(case):
     suspects = case["suspects"]
     weapon = crime_types[case["crime"]]["weapon"]
     time_period = crime_types[case["crime"]]["time"]
     
+    data = []
     for name, info in suspects.items():
-        probability = 0
-        
-        # Occupation-Weapon Match (30% weight)
-        if occupation_weapon[info["occupation"]] == weapon:
-            probability += 30
-        
-        # Time Consistency (20% weight)
-        if info["occupation"] in time_consistency[time_period]:
-            probability += 20
-        
-        # Randomize alibi strength (10% weight)
-        if "weak" in info.get("alibi", ""):
-            probability += 10
-        
-        suspects[name]["probability"] = min(probability, 100)  # Cap at 100%
+        data.append([
+            info["occupation"],
+            weapon,
+            time_period,
+            1 if name == case["true_culprit"] else 0
+        ])
     
-    return suspects
+    df = pd.DataFrame(data, columns=["Occupation", "Weapon", "Time", "Culprit"])
+    
+    le = LabelEncoder()
+    df["Occupation"] = le.fit_transform(df["Occupation"])
+    df["Weapon"] = le.fit_transform(df["Weapon"])
+    df["Time"] = le.fit_transform(df["Time"])
+    
+    X = df[["Occupation", "Weapon", "Time"]]
+    y = df["Culprit"]
+    
+    model = DecisionTreeClassifier()
+    model.fit(X, y)
+    
+    return model, le
 
-# Hidden connection system
-occupation_weapon = {
-    "Security Guard": "crowbar",
-    "Electrician": "screwdriver",
-    "Delivery Driver": "crowbar",
-    "Janitor": "lighter",
-    "Shop Owner": "screwdriver"
-}
-
-time_consistency = {
-    "evening": ["Security Guard", "Shop Owner"],
-    "night": ["Janitor", "Electrician"],
-    "afternoon": ["Delivery Driver", "Shop Owner"]
-}
-
-# Update suspect profiles with probabilities
-case["suspects"] = calculate_probabilities(case)
+model, le = train_model(case)
 
 # ---------- Game Interface ----------
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
@@ -114,7 +107,6 @@ for i, (name, info) in enumerate(case["suspects"].items()):
         st.write(f"### {name}")
         st.write(f"**Occupation**: {info['occupation']}")
         st.write(f"**Connection**: {info['connection']}")
-        st.write(f"**Probability of Guilt**: {info['probability']}%")
         with st.expander("Alibi"):
             st.write(random.choice([
                 'Was alone during the incident (weak alibi)',
