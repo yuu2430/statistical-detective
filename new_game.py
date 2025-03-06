@@ -4,7 +4,7 @@ import random
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.title("🔍 Mystery Solver: Logical Deduction Challenge")
+st.title("🔍 Mystery Solver")
 st.write("Step into the shoes of a detective and unravel the mystery! Follow the clues, interrogate suspects, and crack the case.")
 
 # ---------- Crime Data Generation ----------
@@ -23,11 +23,11 @@ def generate_case():
     }
     
     suspects = {
-        "Alex": {"occupation": "Security Guard", "connection": "Previously caught stealing at crime scene"},
-        "Sam": {"occupation": "Electrician", "connection": "Owed money to a shop owner in the area"},
-        "Jordan": {"occupation": "Delivery Driver", "connection": "Fired after a dispute with a victim"},
-        "Taylor": {"occupation": "Janitor", "connection": "Known for arguments with site manager"},
-        "Casey": {"occupation": "Shop Owner", "connection": "Fraud investigation linked to location"}
+        "Shanu": {"occupation": "Security Guard", "connection": "Previously caught stealing at crime scene"},
+        "Sonam": {"occupation": "Electrician", "connection": "Owed money to a shop owner in the area"},
+        "Rahul": {"occupation": "Delivery Driver", "connection": "Fired after a dispute with a victim"},
+        "Varun": {"occupation": "Janitor", "connection": "Known for arguments with site manager"},
+        "Kartik": {"occupation": "Shop Owner", "connection": "Fraud investigation linked to location"}
     }
     
     culprit = random.choice(list(suspects.keys()))
