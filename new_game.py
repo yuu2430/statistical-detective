@@ -94,14 +94,13 @@ user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
 if st.button("🔒 Submit Final Answer"):
     correct = user_guess == case["true_culprit"]
     if correct:
-        st.success("🎉 Correct deduction! You unraveled the deception!")
+        st.success("🎉 Correct deduction! You win a sweet treat! Yay! 🍬")
         st.session_state.score += 1
         st.balloons()
     else:
-        st.error("❌ Incorrect. Pay closer attention to misleading evidence and false alibis!")
+        st.error("❌ Incorrect. The game has ended.")
+        if st.button("🔄 New case"):
+            st.session_state.case = generate_case()
+            st.rerun()
+    
     st.write(f"🏆 Your current score: {st.session_state.score}")
-
-# ---------- Restart ----------
-if st.button("🔄 New Case"):
-    st.session_state.case = generate_case()
-    st.rerun()
