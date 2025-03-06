@@ -128,4 +128,4 @@ if st.button("🔒 Submit Final Answer"):
 # ---------- Restart ----------
 if st.button("🔄 New Case"):
     st.session_state.case = generate_case()
-    st.experimental_rerun()
+    st.rerun()
