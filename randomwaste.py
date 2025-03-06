@@ -64,7 +64,7 @@ st.write(f"Score: {st.session_state.score}/5")
 
 if st.session_state.game_over:
     if st.session_state.score == 5:
-        st.success("Amazing! You got all 5 correct! Want to play again?")
+        st.success("Amazing! You got all 5 correct!")
     else:
         st.warning("Game Over! The correct category was: " + st.session_state.correct_category)
     st.write("Thanks for playing! :)")
