@@ -14,7 +14,6 @@ crime_types = {
     "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
 }
 
-@st.cache_data
 def generate_case():
     crime_name, details = random.choice(list(crime_types.items()))
     time_window = {
@@ -24,21 +23,28 @@ def generate_case():
     }
     
     suspects = {
-        "Alex": {"occupation": "Security Guard", "connection": "Works at crime scene"},
-        "Sam": {"occupation": "Electrician", "connection": "Recently fired from site"},
-        "Jordan": {"occupation": "Delivery Driver", "connection": "Regular route nearby"},
-        "Taylor": {"occupation": "Janitor", "connection": "Night shift worker"},
-        "Casey": {"occupation": "Shop Owner", "connection": "Financial troubles"}
+        "Alex": {"occupation": "Security Guard", "connection": "Previously caught stealing at crime scene"},
+        "Sam": {"occupation": "Electrician", "connection": "Owed money to a shop owner in the area"},
+        "Jordan": {"occupation": "Delivery Driver", "connection": "Fired after a dispute with a victim"},
+        "Taylor": {"occupation": "Janitor", "connection": "Known for arguments with site manager"},
+        "Casey": {"occupation": "Shop Owner", "connection": "Fraud investigation linked to location"}
     }
     
     culprit = random.choice(list(suspects.keys()))
     
-    # Create subtle evidence patterns
     evidence = {
-        "Security Footage": f"Blurry figure wearing {random.choice(['red', 'blue', 'black'])} jacket",
-        "Tool Markings": f"Matches {details['weapon']} found in {random.choice(['parking lot', 'storage room'])}",
-        "Witness Account": f"Noticed someone with {random.choice(['backpack', 'toolbox'])} near scene",
-        "Digital Records": f"Unauthorized access during {details['time']} hours"
+        "Security Footage": f"Blurry figure seen leaving crime scene at {random.choice(['5:50 PM', '7:30 PM', '11:00 PM'])}",
+        "Tool Markings": f"Marks found that match a {details['weapon']} but also resemble common repair tools",
+        "Witness Account": f"One witness claimed to see {random.choice(['a tall person', 'a person with a limp', 'someone wearing a cap'])}, but another witness contradicted it",
+        "Digital Records": f"Suspicious activity logged, but logs seem tampered with"
+    }
+    
+    alibis = {
+        "Alex": random.choice(["Claims to have been on duty but no logs exist", "Says they were taking a break alone"]),
+        "Sam": random.choice(["Claims to be at home, but phone was tracked near the scene", "Alibi provided by a close friend"]),
+        "Jordan": random.choice(["Mentions being on a call but no record exists", "Was seen near the area but insists it was a coincidence"]),
+        "Taylor": random.choice(["Says they left early, but logs say otherwise", "Claims to be running errands but receipt timestamps don't match"]),
+        "Casey": random.choice(["Claims store cameras were off", "Says they were dealing with a supplier, but supplier denies it"])
     }
     
     return {
@@ -47,87 +53,38 @@ def generate_case():
         "time_window": time_window[details["time"]],
         "true_culprit": culprit,
         "suspects": suspects,
-        "evidence": evidence
+        "evidence": evidence,
+        "alibis": alibis
     }
 
 # Initialize session state
 if "case" not in st.session_state:
     st.session_state.case = generate_case()
 if "score" not in st.session_state:
-    st.session_state.score = 0  # Track player score
+    st.session_state.score = 0
 
 case = st.session_state.case
-
-# ---------- Calculate Probabilities ----------
-def calculate_probabilities(case):
-    suspects = case["suspects"]
-    weapon = crime_types[case["crime"]]["weapon"]
-    time_period = crime_types[case["crime"]]["time"]
-    
-    for name, info in suspects.items():
-        probability = 0
-        
-        # Occupation-Weapon Match (30% weight)
-        if occupation_weapon[info["occupation"]] == weapon:
-            probability += 30
-        
-        # Time Consistency (20% weight)
-        if info["occupation"] in time_consistency[time_period]:
-            probability += 20
-        
-        # Randomize alibi strength (10% weight)
-        if "weak" in info.get("alibi", ""):
-            probability += 10
-        
-        suspects[name]["probability"] = min(probability, 100)  # Cap at 100%
-    
-    return suspects
-
-# Hidden connection system
-occupation_weapon = {
-    "Security Guard": "crowbar",
-    "Electrician": "screwdriver",
-    "Delivery Driver": "crowbar",
-    "Janitor": "lighter",
-    "Shop Owner": "screwdriver"
-}
-
-time_consistency = {
-    "evening": ["Security Guard", "Shop Owner"],
-    "night": ["Janitor", "Electrician"],
-    "afternoon": ["Delivery Driver", "Shop Owner"]
-}
-
-# Update suspect profiles with probabilities
-case["suspects"] = calculate_probabilities(case)
 
 # ---------- Game Interface ----------
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
 
-# ---------- Suspect Profiles in Columns ----------
+# ---------- Suspect Profiles ----------
 st.subheader("👥 Persons of Interest")
-cols = st.columns(len(case["suspects"]))  # Create columns for each suspect
-
+cols = st.columns(len(case["suspects"]))
 for i, (name, info) in enumerate(case["suspects"].items()):
     with cols[i]:
         st.write(f"### {name}")
         st.write(f"**Occupation**: {info['occupation']}")
         st.write(f"**Connection**: {info['connection']}")
-        st.write(f"**Probability of Guilt**: {info['probability']}%")
         with st.expander("Alibi"):
-            st.write(random.choice([
-                'Was alone during the incident (weak alibi)',
-                'Claims to be running errands',
-                'Says they were helping a friend',
-                'Mentions being stuck in traffic (weak alibi)'
-            ]))
+            st.write(case["alibis"][name])
 
 # ---------- Evidence Board ----------
 st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
     with st.expander(title):
-        st.write(detail + " (Could match multiple suspects)")
+        st.write(detail + " (Some details may be misleading)")
 
 # ---------- Deduction Mechanics ----------
 st.subheader("🕵️ Logical Analysis")
@@ -136,32 +93,15 @@ st.subheader("🕵️ Logical Analysis")
 user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
 if st.button("🔒 Submit Final Answer"):
     correct = user_guess == case["true_culprit"]
-    
-    # Verify logical consistency
-    crime_name = case["crime"]
-    if crime_name not in crime_types:
-        st.error("Invalid crime type. Please restart the game.")
+    if correct:
+        st.success("🎉 Correct deduction! You unraveled the deception!")
+        st.session_state.score += 1
+        st.balloons()
     else:
-        weapon = crime_types[crime_name]["weapon"]
-        occupation = case["suspects"][case["true_culprit"]]["occupation"]
-        time_period = crime_types[crime_name]["time"]
-        
-        occupation_match = occupation_weapon[occupation] == weapon
-        time_match = occupation in time_consistency[time_period]
-
-        if correct and occupation_match and time_match:
-            st.success("🎉 Perfect deduction! You identified the hidden patterns!")
-            st.session_state.score += 1  # Increase score
-            st.balloons()
-        elif correct:
-            st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
-            st.session_state.score += 0.5  # Partial score
-        else:
-            st.error("❌ Incorrect. The truth hides in: Occupation-Weapon match + Typical schedule")
-    
+        st.error("❌ Incorrect. Pay closer attention to misleading evidence and false alibis!")
     st.write(f"🏆 Your current score: {st.session_state.score}")
 
 # ---------- Restart ----------
 if st.button("🔄 New Case"):
     st.session_state.case = generate_case()
-    st.rerun()  # Use st.rerun() instead of st.experimental_rerun()
+    st.rerun()
