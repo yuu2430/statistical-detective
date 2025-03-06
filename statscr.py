@@ -7,6 +7,20 @@ st.set_page_config(layout="wide")
 st.title("🔍 Mystery Solver: Logical Deduction Challenge")
 st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
 
+# ---------- Jujutsu Kaisen Character Images ----------
+jj_characters = [
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/6/66/Yuji_Itadori_%28Anime%29.png",  # Yuji Itadori
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/9/9e/Megumi_Fushiguro_%28Anime%29.png",  # Megumi Fushiguro
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/5/5e/Nobara_Kugisaki_%28Anime%29.png",  # Nobara Kugisaki
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/4/40/Satoru_Gojo_%28Anime%29.png",  # Satoru Gojo
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/5/5a/Suguru_Geto_%28Anime%29.png",  # Suguru Geto
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/2/2e/Maki_Zenin_%28Anime%29.png",  # Maki Zenin
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/7/7e/Toge_Inumaki_%28Anime%29.png",  # Toge Inumaki
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/9/9f/Panda_%28Anime%29.png",  # Panda
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/7/7e/Kento_Nanami_%28Anime%29.png",  # Kento Nanami
+    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/8/8e/Aoi_Todo_%28Anime%29.png",  # Aoi Todo
+]
+
 # ---------- Crime Data Generation ----------
 crime_types = {
     "Mall Robbery": {"location": "Mall", "time": "evening", "weapon": "crowbar"},
@@ -70,7 +84,8 @@ st.subheader("👥 Persons of Interest")
 for name, info in case["suspects"].items():
     col1, col2 = st.columns([1, 4])
     with col1:
-        st.image(f"https://i.pravatar.cc/150?img={random.randint(1,70)}", width=100)
+        # Assign a random Jujutsu Kaisen character image
+        st.image(random.choice(jj_characters), width=100)
     with col2:
         st.write(f"### {name}")
         st.write(f"**Occupation**: {info['occupation']}")
