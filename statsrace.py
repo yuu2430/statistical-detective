@@ -1,97 +1,167 @@
 import streamlit as st
 import random
-import pandas as pd
-import matplotlib.pyplot as plt
 
-def roll_die():
-    return random.randint(1, 6)
+st.set_page_config(layout="wide")
 
-def initialize_game():
-    st.session_state.positions = [0] * st.session_state.num_cars
-    st.session_state.energy_used = {i: 0 for i in range(st.session_state.num_cars)}
-    st.session_state.dice_rolls = {i: [] for i in range(st.session_state.num_cars)}
-    st.session_state.game_over = False
-    st.session_state.winner = None
+# ---------- Game Setup ----------
+st.title("🔍 Mystery Solver: Logical Deduction Challenge")
+st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
 
-def roll_and_update():
-    if not st.session_state.game_over:
-        for i in range(st.session_state.num_cars):
-            roll = roll_die()
-            st.session_state.positions[i] += roll
-            st.session_state.dice_rolls[i].append(roll)
-            st.session_state.energy_used[i] += roll * st.session_state.car_efficiency[st.session_state.car_types[i]]
-            
-            if st.session_state.positions[i] >= st.session_state.finish_line:
-                st.session_state.game_over = True
-                st.session_state.winner = f"Car {i+1} ({st.session_state.car_types[i]})"  
-                break
+# ---------- Crime Data Generation ----------
+crime_types = {
+    "Mall Robbery": {"location": "Mall", "time": "evening", "weapon": "crowbar"},
+    "Factory Arson": {"location": "Industrial Area", "time": "night", "weapon": "lighter"},
+    "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
+}
 
-def visualize_race():
-    fig, ax = plt.subplots()
-    ax.barh(range(st.session_state.num_cars), st.session_state.positions, color='blue')
-    ax.set_yticks(range(st.session_state.num_cars))
-    ax.set_yticklabels([f"Car {i+1}" for i in range(st.session_state.num_cars)])
-    ax.set_xlabel("Position")
-    ax.set_title("Race Progress")
-    st.pyplot(fig)
-
-def visualize_stats():
-    if not any(st.session_state.dice_rolls.values()):
-        return
+@st.cache_data
+def generate_case():
+    crime_name, details = random.choice(list(crime_types.items()))
+    time_window = {
+        "evening": "6:00 PM - 8:00 PM",
+        "night": "10:00 PM - 12:00 AM",
+        "afternoon": "2:00 PM - 4:00 PM"
+    }
     
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    suspects = {
+        "Alex": {"occupation": "Security Guard", "connection": "Works at crime scene"},
+        "Sam": {"occupation": "Electrician", "connection": "Recently fired from site"},
+        "Jordan": {"occupation": "Delivery Driver", "connection": "Regular route nearby"},
+        "Taylor": {"occupation": "Janitor", "connection": "Night shift worker"},
+        "Casey": {"occupation": "Shop Owner", "connection": "Financial troubles"}
+    }
     
-    # Dice Roll Distribution
-    all_rolls = [roll for rolls in st.session_state.dice_rolls.values() for roll in rolls]
-    axes[0].hist(all_rolls, bins=range(1, 8), align='left', rwidth=0.8, color='blue')
-    axes[0].set_xticks(range(1, 7))
-    axes[0].set_xlabel("Dice Roll Outcome")
-    axes[0].set_ylabel("Frequency")
-    axes[0].set_title("Dice Roll Distribution")
+    culprit = random.choice(list(suspects.keys()))
     
-    # Energy Consumption
-    axes[1].bar(range(st.session_state.num_cars), st.session_state.energy_used.values(), tick_label=[f"Car {i+1}" for i in st.session_state.energy_used.keys()], color='green')
-    axes[1].set_xlabel("Car Number")
-    axes[1].set_ylabel("Total Energy Used")
-    axes[1].set_title("Energy Consumption by Car Type")
+    # Create subtle evidence patterns
+    evidence = {
+        "Security Footage": f"Blurry figure wearing {random.choice(['red', 'blue', 'black'])} jacket",
+        "Tool Markings": f"Matches {details['weapon']} found in {random.choice(['parking lot', 'storage room'])}",
+        "Witness Account": f"Noticed someone with {random.choice(['backpack', 'toolbox'])} near scene",
+        "Digital Records": f"Unauthorized access during {details['time']} hours"
+    }
     
-    plt.tight_layout()
-    st.pyplot(fig)
+    return {
+        "crime": crime_name,
+        "location": details["location"],
+        "time_window": time_window[details["time"]],
+        "true_culprit": culprit,
+        "suspects": suspects,
+        "evidence": evidence
+    }
 
-def reset_game():
-    st.session_state.clear()
-    st.rerun()
+# Initialize session state
+if "case" not in st.session_state:
+    st.session_state.case = generate_case()
+if "score" not in st.session_state:
+    st.session_state.score = 0  # Track player score
 
-def main():
-    st.title("Sustainable Car Racing Game")
+case = st.session_state.case
+
+# ---------- Calculate Probabilities ----------
+def calculate_probabilities(case):
+    suspects = case["suspects"]
+    weapon = crime_types[case["crime"]]["weapon"]
+    time_period = crime_types[case["crime"]]["time"]
     
-    if "setup_complete" not in st.session_state:
-        st.session_state.num_cars = st.number_input("Enter number of cars:", min_value=2, max_value=10, value=3, step=1)
-        st.session_state.finish_line = st.number_input("Enter finish line position:", min_value=10, max_value=100, value=30, step=5)
+    for name, info in suspects.items():
+        probability = 0
         
-        car_types = []
-        for i in range(st.session_state.num_cars):
-            car_types.append(st.selectbox(f"Choose type for Car {i+1}", ["electric", "petrol", "diesel"], key=f"car_{i}"))
+        # Occupation-Weapon Match (30% weight)
+        if occupation_weapon[info["occupation"]] == weapon:
+            probability += 30
         
-        if st.button("Start Game"):
-            st.session_state.car_types = car_types
-            st.session_state.car_efficiency = {"electric": 0.5, "petrol": 1.5, "diesel": 2.0}
-            initialize_game()
-            st.session_state.setup_complete = True
-            st.rerun()
+        # Time Consistency (20% weight)
+        if info["occupation"] in time_consistency[time_period]:
+            probability += 20
+        
+        # Randomize alibi strength (10% weight)
+        if "weak" in info.get("alibi", ""):
+            probability += 10
+        
+        suspects[name]["probability"] = min(probability, 100)  # Cap at 100%
+    
+    return suspects
+
+# Hidden connection system
+occupation_weapon = {
+    "Security Guard": "crowbar",
+    "Electrician": "screwdriver",
+    "Delivery Driver": "crowbar",
+    "Janitor": "lighter",
+    "Shop Owner": "screwdriver"
+}
+
+time_consistency = {
+    "evening": ["Security Guard", "Shop Owner"],
+    "night": ["Janitor", "Electrician"],
+    "afternoon": ["Delivery Driver", "Shop Owner"]
+}
+
+# Update suspect profiles with probabilities
+case["suspects"] = calculate_probabilities(case)
+
+# ---------- Game Interface ----------
+st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
+st.write(f"⏰ Time Window: {case['time_window']}")
+
+# ---------- Suspect Profiles in Columns ----------
+st.subheader("👥 Persons of Interest")
+cols = st.columns(len(case["suspects"]))  # Create columns for each suspect
+
+for i, (name, info) in enumerate(case["suspects"].items()):
+    with cols[i]:
+        st.write(f"### {name}")
+        st.write(f"**Occupation**: {info['occupation']}")
+        st.write(f"**Connection**: {info['connection']}")
+        st.write(f"**Probability of Guilt**: {info['probability']}%")
+        with st.expander("Alibi"):
+            st.write(random.choice([
+                'Was alone during the incident (weak alibi)',
+                'Claims to be running errands',
+                'Says they were helping a friend',
+                'Mentions being stuck in traffic (weak alibi)'
+            ]))
+
+# ---------- Evidence Board ----------
+st.subheader("🔎 Compromised Evidence")
+for title, detail in case["evidence"].items():
+    with st.expander(title):
+        st.write(detail + " (Could match multiple suspects)")
+
+# ---------- Deduction Mechanics ----------
+st.subheader("🕵️ Logical Analysis")
+
+# ---------- Solution Check ----------
+user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
+if st.button("🔒 Submit Final Answer"):
+    correct = user_guess == case["true_culprit"]
+    
+    # Verify logical consistency
+    crime_name = case["crime"]
+    if crime_name not in crime_types:
+        st.error("Invalid crime type. Please restart the game.")
     else:
-        st.subheader("Race Progress")
-        visualize_race()
+        weapon = crime_types[crime_name]["weapon"]
+        occupation = case["suspects"][case["true_culprit"]]["occupation"]
+        time_period = crime_types[crime_name]["time"]
         
-        if st.button("Roll Dice & Move!") and not st.session_state.game_over:
-            roll_and_update()
-        
-        if st.session_state.game_over:
-            st.success(f"{st.session_state.winner} wins the race!")
-            visualize_stats()
-        
-        if st.button("New Game"):
-            reset_game()
+        occupation_match = occupation_weapon[occupation] == weapon
+        time_match = occupation in time_consistency[time_period]
+
+        if correct and occupation_match and time_match:
+            st.success("🎉 Perfect deduction! You identified the hidden patterns!")
+            st.session_state.score += 1  # Increase score
+            st.balloons()
+        elif correct:
+            st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
+            st.session_state.score += 0.5  # Partial score
+        else:
+            st.error("❌ Incorrect. The truth hides in: Occupation-Weapon match + Typical schedule")
     
-if __name__ == "__main__":
-    main()
+    st.write(f"🏆 Your current score: {st.session_state.score}")
+
+# ---------- Restart ----------
+if st.button("🔄 New Case"):
+    st.session_state.case = generate_case()
+    st.rerun()  # Use st.rerun() instead of st.experimental_rerun()
