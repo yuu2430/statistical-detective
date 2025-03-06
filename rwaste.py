@@ -32,7 +32,7 @@ def get_waste_item():
     return item, waste_items[item]
 
 def save_data(waste_item, user_choice, correct_category):
-    """Save the game data to a CSV file."""
+    """Save the game data to a CSV file in the current working directory."""
     file_name = "waste_sorting_data.csv"
     data = pd.DataFrame([[waste_item, user_choice, correct_category, user_choice == correct_category]], 
                          columns=["Waste Item", "User Choice", "Correct Category", "Correct"])
@@ -67,17 +67,18 @@ def show_leaderboard():
             st.write(f"{player}: {rank:.2f} percentile")
 
 def plot_accuracy_chart():
-    """Generate and display a smooth accuracy graph."""
+    """Generate and display a smooth accuracy graph with improved aesthetics."""
     file_name = "waste_sorting_data.csv"
     if os.path.exists(file_name):
         df = pd.read_csv(file_name)
         accuracy = df.groupby("Waste Item")["Correct"].mean() * 100
         
-        plt.figure(figsize=(8, 4))
-        sns.barplot(x=accuracy.index, y=accuracy.values, palette="viridis")
-        plt.xticks(rotation=45, ha='right')
-        plt.ylabel("Accuracy (%)")
-        plt.title("Player Accuracy by Waste Item")
+        plt.figure(figsize=(10, 5))
+        sns.barplot(x=accuracy.index, y=accuracy.values, palette="coolwarm")
+        plt.xticks(rotation=45, ha='right', fontsize=12)
+        plt.ylabel("Accuracy (%)", fontsize=14)
+        plt.title("Player Accuracy by Waste Item", fontsize=16)
+        plt.grid(axis='y', linestyle='--', alpha=0.7)
         st.pyplot(plt)
 
 st.title("Statistical Waste Sorting Challenge")
