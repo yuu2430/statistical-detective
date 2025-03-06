@@ -59,19 +59,22 @@ case = st.session_state.case
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
 
-# ---------- Suspect Profiles ----------
+# ---------- Suspect Profiles in Columns ----------
 st.subheader("👥 Persons of Interest")
-for name, info in case["suspects"].items():
-    st.write(f"### {name}")
-    st.write(f"**Occupation**: {info['occupation']}")
-    st.write(f"**Connection**: {info['connection']}")
-    st.write(f"**Alibi**: {random.choice([
-        'Was alone during the incident',
-        'Claims to be running errands',
-        'Says they were helping a friend',
-        'Mentions being stuck in traffic'
-    ])}")
-    st.markdown("---")
+cols = st.columns(len(case["suspects"]))  # Create columns for each suspect
+
+for i, (name, info) in enumerate(case["suspects"].items()):
+    with cols[i]:
+        st.write(f"### {name}")
+        st.write(f"**Occupation**: {info['occupation']}")
+        st.write(f"**Connection**: {info['connection']}")
+        with st.expander("Alibi"):
+            st.write(random.choice([
+                'Was alone during the incident',
+                'Claims to be running errands',
+                'Says they were helping a friend',
+                'Mentions being stuck in traffic'
+            ]))
 
 # ---------- Evidence Board ----------
 st.subheader("🔎 Compromised Evidence")
