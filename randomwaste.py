@@ -44,7 +44,7 @@ if not st.session_state.game_over:
     st.subheader(f"Waste Item: {st.session_state.current_item}")
     user_choice = st.radio("Choose the correct category:", ["Recyclable", "Compostable", "Non-Recyclable"], key=st.session_state.attempts)
     
-    if st.button("Submit"):
+    if st.button("Submit") and not st.session_state.game_over:
         if user_choice == st.session_state.correct_category:
             st.success("Correct! Well done.")
             st.session_state.score += 1
@@ -52,12 +52,13 @@ if not st.session_state.game_over:
             
             if st.session_state.score < 5:
                 st.session_state.current_item, st.session_state.correct_category = get_waste_item()
-                st.experimental_rerun()
             else:
                 st.session_state.game_over = True
         else:
             st.error(f"Incorrect. The correct category is {st.session_state.correct_category}.")
             st.session_state.game_over = True
+        
+        st.rerun()
     
 st.write(f"Score: {st.session_state.score}/5")
 
@@ -71,4 +72,4 @@ if st.session_state.game_over:
         st.session_state.attempts = 0
         st.session_state.game_over = False
         st.session_state.current_item, st.session_state.correct_category = get_waste_item()
-        st.experimental_rerun()
+        st.rerun()
