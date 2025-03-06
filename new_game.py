@@ -9,7 +9,7 @@ if "stats" not in st.session_state:
 
 # ---------- Game Setup ----------
 st.title("🔍 Mystery Solver: Deduce the Culprit")
-st.write("Examine the ambiguous clues and subtle hints. Not everything is as it seems...")
+st.write("Review the ambiguous CCTV footage and decide who the culprit is. The evidence is minimal—use your intuition!")
 
 # ---------- Crime and Clue Data ----------
 
@@ -27,20 +27,11 @@ possible_uniforms = ["navy blue", "bright orange", "gray", "black", "green"]
 possible_accessories = ["cap", "scarf", "watch", "bag", "none"]
 
 # Hidden logical criteria for culprit determination for each crime type.
-# For example, for Mall Robbery, a Security Guard who might be using a crowbar.
+# For example, for Mall Robbery, a Security Guard is favored.
 hidden_culprit_criteria = {
-    "Mall Robbery": {
-         "occupation": "Security Guard",
-         "weapon": "crowbar"
-    },
-    "Factory Arson": {
-         "occupation": "Janitor",
-         "weapon": "lighter"
-    },
-    "Suburban Burglary": {
-         "occupation": "Delivery Driver",
-         "weapon": "screwdriver"
-    }
+    "Mall Robbery": {"occupation": "Security Guard"},
+    "Factory Arson": {"occupation": "Janitor"},
+    "Suburban Burglary": {"occupation": "Delivery Driver"}
 }
 
 # ---------- Case Generation ----------
@@ -67,31 +58,32 @@ def generate_case():
             "uniform": random.choice(possible_uniforms),
             "accessory": random.choice(possible_accessories),
             "alibi": random.choice([
-                'Was alone during the incident (vague alibi)',
-                'Claims to have been running errands',
-                'Says they were helping a friend',
-                'Mentions being stuck in traffic (vague alibi)'
+                'Claims to have been alone',
+                'Says they were running errands',
+                'Mentions helping a friend',
+                'Notes being stuck in traffic'
             ])
         }
     
-    # Hidden logic: Check which suspects meet the hidden criteria.
+    # Hidden logic: Select a culprit based on the hidden criterion.
     criteria = hidden_culprit_criteria[crime_name]
     potential_culprits = [
         name for name, info in suspects.items()
         if info["occupation"] == criteria["occupation"]
     ]
-    # If more than one meets the criteria, choose one randomly; else pick at random.
     if potential_culprits:
         culprit = random.choice(potential_culprits)
     else:
         culprit = random.choice(suspect_names)
     
-    # Generate ambiguous evidence hints.
+    # The only public hint is the CCTV footage. Its description is ambiguous.
+    cctv_hint = f"Fuzzy CCTV footage shows a person wearing a {random.choice(possible_uniforms)} uniform. " \
+                "The face is blurred and details are scarce."
+    
     evidence = {
-        "Surveillance Footage": f"Fuzzy video shows a person in a {random.choice(possible_uniforms)} uniform, but the face is blurred.",
-        "Tool Markings": f"Traces of tool usage indicate a {details['weapon']} was involved, yet the marks are inconclusive.",
-        "Witness Statement": "A witness mentioned seeing someone with a noticeable accessory near the scene, but details were hazy.",
-        "Digital Records": f"Activity logs show unauthorized access during {details['time']} hours."
+        "CCTV Footage": cctv_hint,
+        "Tool Markings": f"Traces indicate a {details['weapon']} was used, though the evidence is inconclusive.",
+        "Digital Records": f"Access occurred during {details['time']} hours."
     }
     
     return {
@@ -101,41 +93,13 @@ def generate_case():
         "true_culprit": culprit,
         "suspects": suspects,
         "evidence": evidence,
-        "crime_details": details  # Save details for later use.
+        "crime_details": details
     }
 
 # Initialize or reset game case.
 if "case" not in st.session_state or st.button("🔄 New Case"):
     st.session_state.case = generate_case()
 case = st.session_state.case
-
-# ---------- Calculate Ambiguous Probabilities ----------
-
-def calculate_probabilities(case):
-    suspects = case["suspects"]
-    details = case["crime_details"]
-    criteria = hidden_culprit_criteria[case["crime"]]
-    
-    for name, info in suspects.items():
-        probability = 0
-        # Increase probability if occupation matches the hidden criterion.
-        if info["occupation"] == criteria["occupation"]:
-            probability += 30
-        # Slight bonus for certain uniform colors (but this is not definitive).
-        if info["uniform"] in ["navy blue", "gray", "bright orange"]:
-            probability += 10
-        # If accessory is not "none", add a small bonus.
-        if info["accessory"] != "none":
-            probability += 10
-        # A vague alibi gives a bonus.
-        if "vague" in info.get("alibi", ""):
-            probability += 10
-        
-        suspects[name]["probability"] = min(probability, 100)
-    
-    return suspects
-
-case["suspects"] = calculate_probabilities(case)
 
 # ---------- Display Game Statistics ----------
 st.sidebar.header("📊 Game Statistics")
@@ -149,24 +113,19 @@ st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
 
 st.subheader("👥 Persons of Interest")
+# Only display the suspect names.
 suspect_names = list(case["suspects"].keys())
 cols = st.columns(len(suspect_names))
-
 for i, name in enumerate(suspect_names):
-    info = case["suspects"][name]
     with cols[i]:
         st.write(f"### {name}")
-        st.write(f"**Occupation:** {info['occupation']}")
-        st.write(f"**Uniform Color:** {info['uniform']}")
-        st.write(f"**Accessory:** {info['accessory']}")
-        with st.expander("Alibi"):
-            st.write(info['alibi'])
-        st.write(f"**Match Probability:** {info['probability']}%")
+        # Details like occupation, uniform, or alibi are hidden from the player.
 
-st.subheader("🔎 Compromised Evidence")
+st.subheader("🔎 Evidence")
+# Only the CCTV footage is intended as a clue, along with some generic evidence.
 for title, detail in case["evidence"].items():
     with st.expander(title):
-        st.write(detail + " (The clues are open to interpretation.)")
+        st.write(detail)
 
 # ---------- Logical Analysis ----------
 st.subheader("🕵️ Who is the Culprit?")
@@ -178,13 +137,12 @@ if st.button("🔒 Submit Final Answer"):
     
     if correct:
         st.session_state.stats["wins"] += 1
-        st.success("🎉 Your deduction is correct! The mystery deepens no more.")
+        st.success("🎉 Your deduction is correct!")
         st.balloons()
     else:
         st.session_state.stats["losses"] += 1
-        st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**. Better luck next time!")
+        st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**.")
     
-    # Option to start a new game.
     if st.button("Play Again"):
         st.session_state.case = generate_case()
         st.experimental_rerun()
