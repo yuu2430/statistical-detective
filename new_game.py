@@ -52,7 +52,16 @@ def generate_case():
     
     suspects = {}
     for i, name in enumerate(suspect_names):
-        suspects[name] = {"occupation": shuffled_occupations[i], "connection": shuffled_connections[i]}
+        suspects[name] = {
+            "occupation": shuffled_occupations[i], 
+            "connection": shuffled_connections[i],
+            "alibi": random.choice([
+                'Was alone during the incident (weak alibi)',
+                'Claims to be running errands',
+                'Says they were helping a friend',
+                'Mentions being stuck in traffic (weak alibi)'
+            ])
+        }
     
     culprit = random.choice(suspect_names)
     evidence = {
@@ -100,7 +109,6 @@ st.write(f"⏰ Time Window: {case['time_window']}")
 st.subheader("👥 Persons of Interest")
 
 shuffled_suspect_names = list(case["suspects"].keys())
-random.shuffle(shuffled_suspect_names)
 cols = st.columns(len(shuffled_suspect_names))
 
 for i, name in enumerate(shuffled_suspect_names):
@@ -110,12 +118,7 @@ for i, name in enumerate(shuffled_suspect_names):
         st.write(f"**Occupation**: {info['occupation']}")
         st.write(f"**Connection**: {info['connection']}")
         with st.expander("Alibi"):
-            st.write(random.choice([
-                'Was alone during the incident (weak alibi)',
-                'Claims to be running errands',
-                'Says they were helping a friend',
-                'Mentions being stuck in traffic (weak alibi)'
-            ]))
+            st.write(info['alibi'])
 
 st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
