@@ -76,7 +76,7 @@ for i, (name, info) in enumerate(case["suspects"].items()):
                 'Mentions being stuck in traffic'
             ]))
 
-# ---------- Evidence Board in Expandable Sections ----------
+# ---------- Evidence Board ----------
 st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
     with st.expander(title):
