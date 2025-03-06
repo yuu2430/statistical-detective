@@ -58,12 +58,14 @@ st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
 
 st.subheader("👥 Suspects")
-for name, info in case["suspects"].items():
-    st.write(f"### {name}")
-    st.write(f"**Occupation**: {info['occupation']}")
-    st.write(f"**Connection**: {info['connection']}")
-    with st.expander("Alibi"):
-        st.write(case["alibis"][name])
+cols = st.columns(len(case["suspects"]))
+for i, (name, info) in enumerate(case["suspects"].items()):
+    with cols[i]:
+        st.write(f"### {name}")
+        st.write(f"**Occupation**: {info['occupation']}")
+        st.write(f"**Connection**: {info['connection']}")
+        with st.expander("Alibi"):
+            st.write(case["alibis"][name])
 
 st.subheader("🔎 Evidence")
 for title, detail in case["evidence"].items():
@@ -82,9 +84,8 @@ if st.button("🔒 Submit Final Answer"):
         case["attempts"] += 1
         if case["attempts"] == 2:
             st.warning("❌ Incorrect! Showing probability hints.")
-            # Compute probabilities based on evidence strength
             probabilities = {suspect: random.uniform(10, 80) for suspect in case["suspects"].keys()}
-            probabilities[case["true_culprit"]] = random.uniform(80, 100)  # Make the actual culprit more likely
+            probabilities[case["true_culprit"]] = random.uniform(80, 100)
             total = sum(probabilities.values())
             probabilities = {k: round(v / total * 100, 2) for k, v in probabilities.items()}
             sorted_probs = sorted(probabilities.items(), key=lambda x: x[1], reverse=True)
