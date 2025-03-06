@@ -52,7 +52,7 @@ def show_statistics():
         st.write("### Player Performance Stats:")
         st.bar_chart(accuracy)
 
-st.title("Statistical Waste Sorting Challenge")
+st.title("Waste Sorting Challenge")
 
 st.write("Sort the waste item into the correct category: Recycling, Composting, Landfill, Hazardous Waste, or Organic Waste.")
 
