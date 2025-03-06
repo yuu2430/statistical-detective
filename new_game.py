@@ -8,11 +8,12 @@ st.title("🔍 Mystery Solver: Logical Deduction Challenge")
 st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
 
 # ---------- Crime Data Generation ----------
-crime_types = {
-    "Mall Robbery": {"location": "Mall", "time": "evening", "weapon": "crowbar"},
-    "Factory Arson": {"location": "Industrial Area", "time": "night", "weapon": "lighter"},
-    "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
-}
+def generate_crime_types():
+    return {
+        "Mall Robbery": {"location": "Mall", "time": "evening", "weapon": "crowbar"},
+        "Factory Arson": {"location": "Industrial Area", "time": "night", "weapon": "lighter"},
+        "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
+    }
 
 possible_occupations = ["Security Guard", "Electrician", "Delivery Driver", "Janitor", "Shop Owner"]
 possible_connections = [
@@ -34,20 +35,26 @@ time_consistency = {
     "afternoon": ["Delivery Driver", "Shop Owner"]
 }
 
-@st.cache_data
+@st.cache_data()
 def generate_case():
+    crime_types = generate_crime_types()
     crime_name, details = random.choice(list(crime_types.items()))
-    time_window = {"evening": "6:00 PM - 8:00 PM", "night": "10:00 PM - 12:00 AM", "afternoon": "2:00 PM - 4:00 PM"}
+    time_window = {
+        "evening": "6:00 PM - 8:00 PM",
+        "night": "10:00 PM - 12:00 AM",
+        "afternoon": "2:00 PM - 4:00 PM"
+    }
     
     shuffled_occupations = random.sample(possible_occupations, len(possible_occupations))
     shuffled_connections = random.sample(possible_connections, len(possible_connections))
+    suspect_names = ["Alex", "Sam", "Jordan", "Taylor", "Casey"]
+    random.shuffle(suspect_names)
     
-    suspects = {
-        name: {"occupation": shuffled_occupations[i], "connection": shuffled_connections[i]}
-        for i, name in enumerate(random.sample(["Alex", "Sam", "Jordan", "Taylor", "Casey"], 5))
-    }
+    suspects = {}
+    for i, name in enumerate(suspect_names):
+        suspects[name] = {"occupation": shuffled_occupations[i], "connection": shuffled_connections[i]}
     
-    culprit = random.choice(list(suspects.keys()))
+    culprit = random.choice(suspect_names)
     evidence = {
         "Security Footage": f"Blurry figure wearing {random.choice(['red', 'blue', 'black'])} jacket",
         "Tool Markings": f"Matches {details['weapon']} found in {random.choice(['parking lot', 'storage room'])}",
@@ -64,17 +71,14 @@ def generate_case():
         "evidence": evidence
     }
 
-# Reset case on refresh or button press
-if "case" not in st.session_state or st.session_state.get("new_case", False):
+if "case" not in st.session_state or st.button("🔄 New Case"):
     st.session_state.case = generate_case()
-    st.session_state.new_case = False
-
 case = st.session_state.case
 
 def calculate_probabilities(case):
     suspects = case["suspects"]
-    weapon = crime_types[case["crime"]]["weapon"]
-    time_period = crime_types[case["crime"]]["time"]
+    weapon = generate_crime_types()[case["crime"]]["weapon"]
+    time_period = generate_crime_types()[case["crime"]]["time"]
     
     for name, info in suspects.items():
         probability = 0
@@ -82,6 +86,9 @@ def calculate_probabilities(case):
             probability += 30
         if info["occupation"] in time_consistency[time_period]:
             probability += 20
+        if "weak" in info.get("alibi", ""):
+            probability += 10
+        
         suspects[name]["probability"] = min(probability, 100)
     
     return suspects
@@ -90,9 +97,10 @@ case["suspects"] = calculate_probabilities(case)
 
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
-
 st.subheader("👥 Persons of Interest")
-shuffled_suspect_names = random.sample(list(case["suspects"].keys()), len(case["suspects"]))
+
+shuffled_suspect_names = list(case["suspects"].keys())
+random.shuffle(shuffled_suspect_names)
 cols = st.columns(len(shuffled_suspect_names))
 
 for i, name in enumerate(shuffled_suspect_names):
@@ -116,11 +124,13 @@ for title, detail in case["evidence"].items():
 
 st.subheader("🕵️ Logical Analysis")
 user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
-
 if st.button("🔒 Submit Final Answer"):
     correct = user_guess == case["true_culprit"]
-    occupation_match = occupation_weapon[case["suspects"][case["true_culprit"]]["occupation"]] == crime_types[case["crime"]]["weapon"]
-    time_match = case["suspects"][case["true_culprit"]]["occupation"] in time_consistency[crime_types[case["crime"]]["time"]]
+    weapon = generate_crime_types()[case["crime"]]["weapon"]
+    occupation = case["suspects"][case["true_culprit"]]["occupation"]
+    time_period = generate_crime_types()[case["crime"]]["time"]
+    occupation_match = occupation_weapon[occupation] == weapon
+    time_match = occupation in time_consistency[time_period]
     
     if correct and occupation_match and time_match:
         st.success("🎉 Perfect deduction! You identified the hidden patterns!")
@@ -129,7 +139,3 @@ if st.button("🔒 Submit Final Answer"):
         st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
     else:
         st.error("❌ Incorrect. The truth hides in: Occupation-Weapon match + Typical schedule")
-
-if st.button("🔄 New Case"):
-    st.session_state.new_case = True
-    st.rerun()
