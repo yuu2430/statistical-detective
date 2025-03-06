@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 import pandas as pd
 import random
@@ -7,16 +6,16 @@ from datetime import datetime, timedelta
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.title("🕵️ Crack the Mystery")
-st.write("Find the real culprit by analyzing evidence and interrogating suspects!")
+st.title("🕵️ The Ultimate Detective Challenge")
+st.write("Analyze evidence, interrogate suspects, and uncover the truth!")
 
-# ---------- Crime Data ----------
+# ---------- Crime Data Generation ----------
 crime_reports = [
-    "A robbery at a mall. Suspect seen near the food court.",
-    "An arson case occurred in an industrial area at midnight.",
-    "A burglary in the suburbs. Suspect fled before police arrived.",
+    "A high-profile burglary at a luxury estate. No signs of forced entry.",
+    "A missing person case where the victim was last seen at a cafe.",
+    "An arson attack on a storage unit with confidential documents.",
 ]
-locations = ["Downtown", "City Park", "Suburbs", "Industrial Area", "Mall"]
+locations = ["Downtown", "Suburbs", "Warehouse District", "Mall", "Train Station"]
 
 @st.cache_data
 def generate_case():
@@ -25,18 +24,23 @@ def generate_case():
         "Crime_Report": random.choice(crime_reports),
         "Date": crime_date.strftime('%Y-%m-%d'),
         "Location": random.choice(locations),
-        "Culprit": random.choice(["John", "Sarah", "Mike"]),
+        "Culprit": random.choice(["Alex", "Jordan", "Casey", "Morgan"]),
     }
 
 if "case" not in st.session_state:
     st.session_state.case = generate_case()
 
 case = st.session_state.case
-st.subheader("📜 Crime Report:")
+st.subheader("📜 Case Details:")
 st.write(f"{case['Crime_Report']}\n📅 Date: {case['Date']} | 📍 Location: {case['Location']}")
 
-# ---------- Suspect Generation ----------
-suspects = {"John": "Security guard, fired recently.", "Sarah": "Owes money, desperate.", "Mike": "Recently fired, struggling."}
+# ---------- Suspect Generation with Hidden Clues ----------
+suspects = {
+    "Alex": "A tech specialist with access to surveillance systems.",
+    "Jordan": "A former detective with a history of rule-breaking.",
+    "Casey": "A financial advisor with major gambling debts.",
+    "Morgan": "An investigative journalist working on an exposé.",
+}
 culprit = case["Culprit"]
 
 def generate_suspects():
@@ -46,10 +50,14 @@ def generate_suspects():
             "Name": name,
             "Background": background,
             "Alibi": random.choice([
-                "Claims to have been home alone.",
-                "Says they were out but no proof.",
-                "A friend vouches, but timeline is off.",
-            ]) if name == culprit else "A solid alibi, but is it true?",
+                "Claims to have been at home but no one can confirm.",
+                "Says they were at a bar, but left alone midway.",
+                "Mentions being with a friend, but the timelines don’t match.",
+            ]) if name == culprit else random.choice([
+                "A reliable witness confirms their whereabouts.",
+                "Surveillance footage suggests they were elsewhere.",
+                "Has a work-related timestamp proving their alibi.",
+            ]),
         })
     return profiles
 
@@ -61,11 +69,12 @@ for s in st.session_state.suspects:
     st.write(f"**{s['Name']}**: {s['Background']}\n_Alibi_: {s['Alibi']}")
     st.markdown("---")
 
-# ---------- Evidence & Puzzle ----------
+# ---------- Evidence & Hidden Clues ----------
 evidence = [
-    {"title": "DNA Report", "detail": "Traces found but inconclusive."},
-    {"title": "CCTV Footage", "detail": "Blurred figure seen leaving."},
-    {"title": "Mysterious Note", "detail": "Contains scrambled text: *EHT PLIURCT SI HOJN*"},
+    {"title": "Phone Records", "detail": "One suspect made a call near the crime scene before midnight."},
+    {"title": "Security Footage", "detail": "A car similar to one owned by a suspect was spotted nearby."},
+    {"title": "Confidential Document", "detail": "A classified file was accessed using someone’s credentials."},
+    {"title": "Witness Statement", "detail": "A witness claims to have seen someone wearing a red jacket leaving hurriedly."},
 ]
 
 st.subheader("🔎 Evidence Board")
@@ -74,13 +83,13 @@ for item in evidence:
         st.write(item["detail"])
 
 # ---------- Final Guess ----------
-st.subheader("🕵️ Who is the Culprit?")
-guess = st.selectbox("Choose your suspect:", [s["Name"] for s in st.session_state.suspects])
+st.subheader("🕵️ Make Your Deduction")
+guess = st.selectbox("Choose the suspect you believe is guilty:", [s["Name"] for s in st.session_state.suspects])
 if st.button("🚔 Submit Your Guess"):
     if guess == culprit:
-        st.success("🎉 You solved the case!")
+        st.success("🎉 Correct! You solved the case!")
     else:
-        st.error("❌ Wrong suspect! Try again.")
+        st.error("❌ Incorrect! The real culprit remains at large. Reevaluate the clues and suspects.")
 
 if st.button("🔄 New Case"):
     st.session_state.case = generate_case()
