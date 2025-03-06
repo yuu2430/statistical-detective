@@ -54,7 +54,8 @@ def generate_case():
         "true_culprit": culprit,
         "suspects": suspects,
         "evidence": evidence,
-        "alibis": alibis
+        "alibis": alibis,
+        "attempts": 0  # Track incorrect attempts
     }
 
 # Initialize session state
@@ -98,7 +99,11 @@ if st.button("🔒 Submit Final Answer"):
         st.session_state.score += 1
         st.balloons()
     else:
-        st.error("❌ Incorrect. The game has ended.")
+        st.session_state.case["attempts"] += 1
+        if st.session_state.case["attempts"] >= 2:
+            st.error("❌ Game Over! You've used both attempts.")
+        else:
+            st.warning(f"❌ Incorrect! You have {2 - st.session_state.case['attempts']} attempt(s) left.")
     
     st.write(f"🏆 Your current score: {st.session_state.score}")
 
