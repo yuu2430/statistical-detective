@@ -66,7 +66,8 @@ if st.session_state.game_over:
     if st.session_state.score == 5:
         st.success("Amazing! You got all 5 correct! Want to play again?")
     else:
-        st.warning("Game Over! Try again.")
+        st.warning("Game Over! The correct category was: " + st.session_state.correct_category)
+    st.write("Thanks for playing! :)")
     if st.button("New Game"):
         st.session_state.score = 0
         st.session_state.attempts = 0
