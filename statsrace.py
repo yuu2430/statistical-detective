@@ -36,6 +36,9 @@ def visualize_race():
     st.pyplot(fig)
 
 def visualize_stats():
+    if not any(st.session_state.dice_rolls.values()):
+        return
+    
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
     
     # Dice Roll Distribution
@@ -56,26 +59,27 @@ def visualize_stats():
     st.pyplot(fig)
 
 def reset_game():
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
+    st.session_state.clear()
     st.rerun()
 
 def main():
     st.title("Sustainable Car Racing Game")
     
     if "num_cars" not in st.session_state:
-        st.session_state.num_cars = st.number_input("Enter number of cars:", min_value=2, max_value=10, value=3, step=1)
-        st.session_state.finish_line = st.number_input("Enter finish line position:", min_value=10, max_value=100, value=30, step=5)
-        
-        car_types = []
-        car_efficiency = {"electric": 0.5, "petrol": 1.5, "diesel": 2.0}
-        
-        for i in range(st.session_state.num_cars):
-            car_types.append(st.selectbox(f"Choose type for Car {i+1}", ["electric", "petrol", "diesel"], key=f"car_{i}"))
-        
-        st.session_state.car_types = car_types
-        st.session_state.car_efficiency = car_efficiency
+        st.session_state.num_cars = 3
+        st.session_state.finish_line = 30
+        st.session_state.car_types = ["electric"] * st.session_state.num_cars
+        st.session_state.car_efficiency = {"electric": 0.5, "petrol": 1.5, "diesel": 2.0}
         initialize_game()
+    
+    st.session_state.num_cars = st.number_input("Enter number of cars:", min_value=2, max_value=10, value=st.session_state.num_cars, step=1)
+    st.session_state.finish_line = st.number_input("Enter finish line position:", min_value=10, max_value=100, value=st.session_state.finish_line, step=5)
+    
+    car_types = []
+    for i in range(st.session_state.num_cars):
+        car_types.append(st.selectbox(f"Choose type for Car {i+1}", ["electric", "petrol", "diesel"], index=["electric", "petrol", "diesel"].index(st.session_state.car_types[i]) if i < len(st.session_state.car_types) else 0, key=f"car_{i}"))
+    
+    st.session_state.car_types = car_types
     
     st.subheader("Race Progress")
     visualize_race()
