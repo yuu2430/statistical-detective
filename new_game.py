@@ -9,7 +9,7 @@ if "stats" not in st.session_state:
 
 # ---------- Game Setup ----------
 st.title("🔍 Mystery Solver: Logical Deduction Challenge")
-st.write("Analyze subtle patterns and hidden clues. One clear truth emerges from multiple hints...")
+st.write("Analyze subtle patterns and hidden clues. One clear truth emerges when you combine the evidence with common sense.")
 
 # ---------- Crime Data Generation ----------
 def generate_crime_types():
@@ -21,6 +21,7 @@ def generate_crime_types():
 
 possible_occupations = ["Security Guard", "Electrician", "Delivery Driver", "Janitor", "Shop Owner"]
 
+# Maps each occupation to a typical weapon
 occupation_weapon = {
     "Security Guard": "crowbar",
     "Electrician": "screwdriver",
@@ -29,6 +30,7 @@ occupation_weapon = {
     "Shop Owner": "screwdriver"
 }
 
+# Defines which occupations typically work during a given time period
 time_consistency = {
     "evening": ["Security Guard", "Shop Owner"],
     "night": ["Janitor", "Electrician"],
@@ -62,7 +64,22 @@ def generate_case():
             ])
         }
     
-    culprit = random.choice(suspect_names)
+    # Logical culprit selection:
+    # 1. Identify suspects whose occupation weapon matches the crime weapon.
+    # 2. Of those, pick the ones whose occupation fits the time consistency.
+    possible_culprits = []
+    for name, info in suspects.items():
+        if occupation_weapon[info["occupation"]] == details["weapon"]:
+            if info["occupation"] in time_consistency[details["time"]]:
+                possible_culprits.append(name)
+    
+    # If one or more suspects meet the logical criteria, choose one as culprit.
+    # Otherwise, fall back to a random suspect.
+    if possible_culprits:
+        culprit = random.choice(possible_culprits)
+    else:
+        culprit = random.choice(suspect_names)
+    
     evidence = {
         "Security Footage": f"Blurry figure wearing {random.choice(['red', 'blue', 'black'])} jacket",
         "Tool Markings": f"Matches {details['weapon']} found in {random.choice(['parking lot', 'storage room'])}",
@@ -77,7 +94,7 @@ def generate_case():
         "true_culprit": culprit,
         "suspects": suspects,
         "evidence": evidence,
-        "crime_details": details  # storing details for later use
+        "crime_details": details  # Save details for probability calculations
     }
 
 # Initialize or reset game case
@@ -88,15 +105,19 @@ case = st.session_state.case
 
 def calculate_probabilities(case):
     suspects = case["suspects"]
-    weapon = generate_crime_types()[case["crime"]]["weapon"]
-    time_period = generate_crime_types()[case["crime"]]["time"]
+    details = case["crime_details"]
+    weapon = details["weapon"]
+    time_period = details["time"]
     
     for name, info in suspects.items():
         probability = 0
+        # Increase probability if occupation's weapon matches the crime weapon.
         if occupation_weapon[info["occupation"]] == weapon:
             probability += 30
+        # Increase further if the suspect's occupation fits the crime's time period.
         if info["occupation"] in time_consistency[time_period]:
             probability += 20
+        # A weak alibi nudges the probability higher.
         if "weak" in info.get("alibi", ""):
             probability += 10
         
@@ -140,9 +161,10 @@ user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
 if st.button("🔒 Submit Final Answer"):
     st.session_state.stats["games_played"] += 1
     correct = user_guess == case["true_culprit"]
-    weapon = generate_crime_types()[case["crime"]]["weapon"]
+    details = case["crime_details"]
+    weapon = details["weapon"]
     occupation = case["suspects"][case["true_culprit"]]["occupation"]
-    time_period = generate_crime_types()[case["crime"]]["time"]
+    time_period = details["time"]
     occupation_match = occupation_weapon[occupation] == weapon
     time_match = occupation in time_consistency[time_period]
     
@@ -152,7 +174,7 @@ if st.button("🔒 Submit Final Answer"):
         st.balloons()
     elif correct:
         st.session_state.stats["wins"] += 1
-        st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
+        st.warning("✅ Correct suspect, but did you catch the full pattern? (Consider Occupation + Time + Weapon)")
     else:
         st.session_state.stats["losses"] += 1
         st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**. The game is now over.")
