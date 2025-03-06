@@ -78,37 +78,34 @@ def generate_suspects(case):
         "Emma": "Insisted she was at home, reading all evening.",
         "David": "Mentioned he was out running errands."
     }
-    
+
+    culprit_name = case["Suspect_Name"]
     culprit = {
-         "Name": case["Suspect_Name"],
-         "Age": case["Suspect_Age"],
-         "Gender": case["Suspect_Gender"],
-         "Role": "Culprit",
-         "Background": background_info[case["Suspect_Name"]],
-         "Alibi": alibis[case["Suspect_Name"]]
+        "Name": culprit_name,
+        "Age": case["Suspect_Age"],
+        "Gender": case["Suspect_Gender"],
+        "Role": "Culprit",
+        "Background": background_info.get(culprit_name, "No background information available."),
+        "Alibi": alibis.get(culprit_name, "No alibi provided."),
     }
-    all_names = ["John", "Sarah", "Mike", "Emma", "David"]
-    decoy_names = [name for name in all_names if name != case["Suspect_Name"]]
-    decoy1_name = random.choice(decoy_names)
-    decoy1 = {
-         "Name": decoy1_name,
-         "Age": random.randint(18, 50),
-         "Gender": random.choice(["Male", "Female"]),
-         "Role": "Decoy",
-         "Background": background_info[decoy1_name],
-         "Alibi": alibis[decoy1_name]
-    }
-    decoy_names = [name for name in decoy_names if name != decoy1_name]
-    decoy2_name = random.choice(decoy_names)
-    decoy2 = {
-         "Name": decoy2_name,
-         "Age": random.randint(18, 50),
-         "Gender": random.choice(["Male", "Female"]),
-         "Role": "Decoy",
-         "Background": background_info[decoy2_name],
-         "Alibi": alibis[decoy2_name]
-    }
-    return [culprit, decoy1, decoy2]
+
+    all_names = list(background_info.keys())
+    decoy_names = [name for name in all_names if name != culprit_name]
+    random.shuffle(decoy_names)  # Randomize order
+
+    decoys = []
+    for i in range(2):
+        name = decoy_names[i]
+        decoys.append({
+            "Name": name,
+            "Age": random.randint(18, 50),
+            "Gender": random.choice(["Male", "Female"]),
+            "Role": "Decoy",
+            "Background": background_info.get(name, "No background information available."),
+            "Alibi": alibis.get(name, "No alibi provided."),
+        })
+
+    return [culprit] + decoys
 
 if "suspects" not in st.session_state:
     st.session_state.suspects = generate_suspects(selected_case)
@@ -130,8 +127,7 @@ evidence_items = [
     {"title": "Time-stamped Call", "detail": "A call was placed at the time of the crime, possibly linking a suspect."},
 ]
 
-# Allow players to click on evidence items to reveal more info
-for idx, item in enumerate(evidence_items):
+for item in evidence_items:
     with st.expander(item["title"]):
         st.write(item["detail"])
 
@@ -154,7 +150,6 @@ question_list = [
     "What were you doing at the crime scene?"
 ]
 
-# Branching responses with nonverbal cues (simulated by text hints)
 responses = {
     "Where were you last night?": {
         "Culprit": {"answer": "I was at home... though I did step out for a bit.", "cue": "😬 (Avoiding eye contact)"},
@@ -185,7 +180,6 @@ st.subheader("📊 AI Crime Analysis")
 location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
 df["Location_Code"] = df["Location"].map(location_map)
 
-# K-Means clustering on location and weapon used (as a proxy to add dimension)
 weapon_map = {"Knife": 0, "Gun": 1, "None": 2}
 df["Weapon_Code"] = df["Weapon_Used"].map(weapon_map)
 
