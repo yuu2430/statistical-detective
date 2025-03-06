@@ -5,13 +5,13 @@ st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
 st.title("🔍 Sustainability Crime Solver")
-st.write("Step into the role of an investigator tackling crimes against sustainability! Use logical reasoning and statistical insights to uncover the truth.")
+st.write("Step into the role of an investigator solving environmental crimes! Use logic and clues to find the culprit.")
 
 # ---------- Crime Data Generation ----------
 crime_types = {
     "Illegal Waste Dumping": {"location": "Riverside", "time": "night", "weapon": "industrial truck"},
     "Greenwashing Fraud": {"location": "Corporate Office", "time": "afternoon", "weapon": "forged documents"},
-    "Energy Theft": {"location": "Suburban Area", "time": "evening", "weapon": "modified meter"}
+    "Energy Theft": {"location": "Residential Area", "time": "evening", "weapon": "tampered meter"}
 }
 
 def generate_case():
@@ -23,28 +23,28 @@ def generate_case():
     }
     
     suspects = {
-        "Alex": {"occupation": "Factory Owner", "connection": "Previously fined for environmental violations"},
-        "Sam": {"occupation": "Corporate Executive", "connection": "Recently launched a 'sustainable' campaign under scrutiny"},
-        "Jordan": {"occupation": "Truck Driver", "connection": "Known to transport unverified industrial waste"},
-        "Taylor": {"occupation": "Electrician", "connection": "Worked on smart meters in the affected area"},
-        "Casey": {"occupation": "Land Developer", "connection": "Owns property near the contaminated site"}
+        "Ravi": {"occupation": "Factory Owner", "connection": "Previously fined for illegal dumping"},
+        "Priya": {"occupation": "Corporate Executive", "connection": "Launched a 'green' campaign under investigation"},
+        "Arjun": {"occupation": "Truck Driver", "connection": "Frequently seen near illegal waste sites"},
+        "Neha": {"occupation": "Electrician", "connection": "Worked on meters in the affected area"},
+        "Vikram": {"occupation": "Real Estate Developer", "connection": "Owns land near contaminated sites"}
     }
     
     culprit = random.choice(list(suspects.keys()))
     
     evidence = {
-        "Security Footage": f"Blurry figure seen at {details['location']} around {random.choice(['10:30 PM', '7:15 PM', '3:45 PM'])}",
-        "Financial Records": f"Suspicious transactions related to {random.choice(['waste disposal', 'energy meter tampering', 'corporate greenwashing'])}",
-        "Witness Account": f"A local resident reported seeing {random.choice(['a truck unloading waste', 'a person manipulating a meter', 'a document shredding session'])}, but details are unclear.",
-        "Digital Records": f"Logs indicate unauthorized activity during {details['time']} hours"
+        "Security Footage": f"A blurry figure was spotted near {details['location']} at {random.choice(['10:30 PM', '7:15 PM', '3:45 PM'])}",
+        "Financial Records": f"Suspicious payments linked to {random.choice(['waste disposal', 'meter tampering', 'corporate fraud'])}",
+        "Witness Statement": f"Someone saw {random.choice(['a truck unloading waste', 'a person adjusting a meter', 'documents being shredded'])}, but their memory is unclear.",
+        "Digital Logs": f"Unauthorized activity detected at {details['time']} hours"
     }
     
     alibis = {
-        "Alex": random.choice(["Claims to have been at a business meeting, but records are missing", "Says they were at home, but no verification"]),
-        "Sam": random.choice(["Was in a board meeting, but logs show an early exit", "Claims to be traveling, but flight records don't match"]),
-        "Jordan": random.choice(["Truck logs were erased that night", "Insists another driver was using the vehicle"]),
-        "Taylor": random.choice(["Mentions a repair job, but no work orders exist", "Claims they left early, but GPS shows otherwise"]),
-        "Casey": random.choice(["Says they were meeting investors, but no meeting logs", "Claims they were home, but security cameras show an empty house"])
+        "Ravi": random.choice(["Claims to have been at a meeting, but no records exist", "Says he was at home, but no proof"]),
+        "Priya": random.choice(["Was in a board meeting, but left early", "Claims to be traveling, but flight records don’t match"]),
+        "Arjun": random.choice(["Truck logs were deleted that night", "Says another driver borrowed his truck"]),
+        "Neha": random.choice(["Mentions a repair job, but no records exist", "Claims she left early, but GPS says otherwise"]),
+        "Vikram": random.choice(["Says he was meeting investors, but no records exist", "Claims he was home, but security cameras say otherwise"])
     }
     
     return {
@@ -88,24 +88,24 @@ for title, detail in case["evidence"].items():
         st.write(detail + " (Some details may be misleading)")
 
 # ---------- Deduction Mechanics ----------
-st.subheader("🕵️ Logical Analysis")
+st.subheader("🕵️ Investigate and Solve")
 
 # ---------- Solution Check ----------
-user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
+user_guess = st.selectbox("Who is the culprit?", list(case["suspects"].keys()))
 if st.button("🔒 Submit Final Answer"):
     correct = user_guess == case["true_culprit"]
     if correct:
-        st.success("🎉 Correct deduction! You win a sweet treat! Yay! 🍬")
+        st.success("🎉 Correct! You solved the case and won a treat! 🍬")
         st.session_state.score += 1
         st.balloons()
     else:
         st.session_state.case["attempts"] += 1
         if st.session_state.case["attempts"] >= 2:
-            st.error("❌ Game Over! You've used both attempts.")
+            st.error("❌ Game Over! You used both attempts.")
         else:
             st.warning(f"❌ Incorrect! You have {2 - st.session_state.case['attempts']} attempt(s) left.")
     
-    st.write(f"🏆 Your current score: {st.session_state.score}")
+    st.write(f"🏆 Your Score: {st.session_state.score}")
 
 # ---------- New Case Button (Always Visible) ----------
 if st.button("🔄 New Case"):
