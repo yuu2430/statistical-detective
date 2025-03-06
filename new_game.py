@@ -8,42 +8,38 @@ if "stats" not in st.session_state:
     st.session_state.stats = {"games_played": 0, "wins": 0, "losses": 0}
 
 # ---------- Game Setup ----------
-st.title("🔍 Mystery Solver: Logical Deduction Challenge")
-st.write("Use the clues about uniforms, accessories, and other subtle hints to deduce the culprit.")
+st.title("🔍 Mystery Solver: Deduce the Culprit")
+st.write("Examine the ambiguous clues and subtle hints. Not everything is as it seems...")
 
-# ---------- Crime and Culprit Profiles ----------
+# ---------- Crime and Clue Data ----------
 
 def generate_crime_types():
-    # Each crime type includes details for location, time, and weapon.
+    # Each crime type includes details for location, time, and a crime-specific tool.
     return {
         "Mall Robbery": {"location": "Mall", "time": "evening", "weapon": "crowbar"},
         "Factory Arson": {"location": "Industrial Area", "time": "night", "weapon": "lighter"},
         "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
     }
 
-# A list of all possible occupations for suspects.
+# Possible suspect occupations, uniform colors, and accessories.
 possible_occupations = ["Security Guard", "Electrician", "Delivery Driver", "Janitor", "Shop Owner"]
+possible_uniforms = ["navy blue", "bright orange", "gray", "black", "green"]
+possible_accessories = ["cap", "scarf", "watch", "bag", "none"]
 
-# Define a culprit profile for each crime type.
-culprit_profiles = {
+# Hidden logical criteria for culprit determination for each crime type.
+# For example, for Mall Robbery, a Security Guard who might be using a crowbar.
+hidden_culprit_criteria = {
     "Mall Robbery": {
          "occupation": "Security Guard",
-         "uniform": "navy blue uniform",
-         "accessory": "a security badge and cap",
-         "clue": "Witnesses noted someone in a navy blue uniform with a cap and a security badge, carrying a crowbar."
+         "weapon": "crowbar"
     },
     "Factory Arson": {
          "occupation": "Janitor",
-         "uniform": "gray work overalls",
-         "accessory": "a cigarette lighter visibly tucked in the pocket",
-         "smoker": True,
-         "clue": "A local reported seeing a figure in gray overalls, puffing on a cigarette near a lighter."
+         "weapon": "lighter"
     },
     "Suburban Burglary": {
          "occupation": "Delivery Driver",
-         "uniform": "bright orange delivery jacket",
-         "accessory": "a casual cap and a bulky package",
-         "clue": "Someone in a bright orange jacket was seen carrying a large, nondescript box."
+         "weapon": "screwdriver"
     }
 }
 
@@ -59,44 +55,43 @@ def generate_case():
         "afternoon": "2:00 PM - 4:00 PM"
     }
     
-    # Create a list of suspect names.
+    # Create suspect names.
     suspect_names = ["Alex", "Sam", "Jordan", "Taylor", "Casey"]
     random.shuffle(suspect_names)
     
-    # Generate suspect data with random occupations.
+    # Generate suspect details randomly.
     suspects = {}
     for name in suspect_names:
         suspects[name] = {
             "occupation": random.choice(possible_occupations),
+            "uniform": random.choice(possible_uniforms),
+            "accessory": random.choice(possible_accessories),
             "alibi": random.choice([
-                'Was alone during the incident (weak alibi)',
-                'Claims to be running errands',
+                'Was alone during the incident (vague alibi)',
+                'Claims to have been running errands',
                 'Says they were helping a friend',
-                'Mentions being stuck in traffic (weak alibi)'
-            ]),
-            # Extra attributes default to None; they may be overridden for the culprit.
-            "uniform": None,
-            "accessory": None,
-            "smoker": False
+                'Mentions being stuck in traffic (vague alibi)'
+            ])
         }
     
-    # Enforce the culprit profile based on the crime.
-    profile = culprit_profiles[crime_name]
-    # Choose one suspect at random to be the culprit.
-    culprit = random.choice(suspect_names)
-    # Override that suspect's details with the fixed profile.
-    suspects[culprit]["occupation"] = profile["occupation"]
-    suspects[culprit]["uniform"] = profile["uniform"]
-    suspects[culprit]["accessory"] = profile["accessory"]
-    if "smoker" in profile:
-        suspects[culprit]["smoker"] = profile["smoker"]
+    # Hidden logic: Check which suspects meet the hidden criteria.
+    criteria = hidden_culprit_criteria[crime_name]
+    potential_culprits = [
+        name for name, info in suspects.items()
+        if info["occupation"] == criteria["occupation"]
+    ]
+    # If more than one meets the criteria, choose one randomly; else pick at random.
+    if potential_culprits:
+        culprit = random.choice(potential_culprits)
+    else:
+        culprit = random.choice(suspect_names)
     
-    # Adjust evidence clues to hint at the culprit's profile.
+    # Generate ambiguous evidence hints.
     evidence = {
-        "Security Footage": f"Fuzzy footage shows a figure wearing {profile['uniform'] if profile.get('uniform') else 'a generic outfit'}.",
-        "Tool Markings": f"Marks indicate use of a {details['weapon']}.",
-        "Witness Account": profile["clue"],
-        "Digital Records": f"Unauthorized access occurred during {details['time']} hours."
+        "Surveillance Footage": f"Fuzzy video shows a person in a {random.choice(possible_uniforms)} uniform, but the face is blurred.",
+        "Tool Markings": f"Traces of tool usage indicate a {details['weapon']} was involved, yet the marks are inconclusive.",
+        "Witness Statement": "A witness mentioned seeing someone with a noticeable accessory near the scene, but details were hazy.",
+        "Digital Records": f"Activity logs show unauthorized access during {details['time']} hours."
     }
     
     return {
@@ -106,7 +101,7 @@ def generate_case():
         "true_culprit": culprit,
         "suspects": suspects,
         "evidence": evidence,
-        "crime_details": details  # For further use in probability calculations.
+        "crime_details": details  # Save details for later use.
     }
 
 # Initialize or reset game case.
@@ -114,29 +109,26 @@ if "case" not in st.session_state or st.button("🔄 New Case"):
     st.session_state.case = generate_case()
 case = st.session_state.case
 
-# ---------- Calculate Match Probabilities ----------
+# ---------- Calculate Ambiguous Probabilities ----------
 
 def calculate_probabilities(case):
     suspects = case["suspects"]
     details = case["crime_details"]
-    # Base probability bonus if suspect's occupation matches the culprit profile for the crime.
-    profile = culprit_profiles[case["crime"]]
+    criteria = hidden_culprit_criteria[case["crime"]]
     
     for name, info in suspects.items():
         probability = 0
-        # Occupation match bonus.
-        if info["occupation"] == profile["occupation"]:
+        # Increase probability if occupation matches the hidden criterion.
+        if info["occupation"] == criteria["occupation"]:
             probability += 30
-        # Extra bonus if the suspect has the uniform or accessory that matches the profile.
-        if info["uniform"] == profile.get("uniform"):
-            probability += 20
-        if info["accessory"] == profile.get("accessory"):
-            probability += 20
-        # Weak alibi bonus.
-        if "weak" in info.get("alibi", ""):
+        # Slight bonus for certain uniform colors (but this is not definitive).
+        if info["uniform"] in ["navy blue", "gray", "bright orange"]:
             probability += 10
-        # For Factory Arson, being a smoker increases the likelihood.
-        if case["crime"] == "Factory Arson" and info.get("smoker", False):
+        # If accessory is not "none", add a small bonus.
+        if info["accessory"] != "none":
+            probability += 10
+        # A vague alibi gives a bonus.
+        if "vague" in info.get("alibi", ""):
             probability += 10
         
         suspects[name]["probability"] = min(probability, 100)
@@ -165,10 +157,8 @@ for i, name in enumerate(suspect_names):
     with cols[i]:
         st.write(f"### {name}")
         st.write(f"**Occupation:** {info['occupation']}")
-        if info["uniform"]:
-            st.write(f"**Uniform:** {info['uniform']}")
-        if info["accessory"]:
-            st.write(f"**Accessory:** {info['accessory']}")
+        st.write(f"**Uniform Color:** {info['uniform']}")
+        st.write(f"**Accessory:** {info['accessory']}")
         with st.expander("Alibi"):
             st.write(info['alibi'])
         st.write(f"**Match Probability:** {info['probability']}%")
@@ -176,24 +166,23 @@ for i, name in enumerate(suspect_names):
 st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
     with st.expander(title):
-        st.write(detail + " (Could match multiple suspects)")
+        st.write(detail + " (The clues are open to interpretation.)")
 
 # ---------- Logical Analysis ----------
-st.subheader("🕵️ Logical Analysis")
+st.subheader("🕵️ Who is the Culprit?")
 user_guess = st.selectbox("Select the culprit:", suspect_names)
 
 if st.button("🔒 Submit Final Answer"):
     st.session_state.stats["games_played"] += 1
     correct = user_guess == case["true_culprit"]
-    profile = culprit_profiles[case["crime"]]
     
     if correct:
         st.session_state.stats["wins"] += 1
-        st.success("🎉 Perfect deduction! You identified the hidden patterns!")
+        st.success("🎉 Your deduction is correct! The mystery deepens no more.")
         st.balloons()
     else:
         st.session_state.stats["losses"] += 1
-        st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**. The game is now over.")
+        st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**. Better luck next time!")
     
     # Option to start a new game.
     if st.button("Play Again"):
