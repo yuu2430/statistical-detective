@@ -8,25 +8,25 @@ import seaborn as sns
 def get_waste_item():
     """Returns a random waste item and its correct category."""
     waste_items = {
-        "Plastic Bottle": "Recyclable",
-        "Banana Peel": "Compostable",
-        "Aluminum Can": "Recyclable",
-        "Glass Jar": "Recyclable",
-        "Pizza Box (Greasy)": "Compostable",
-        "Paper Cup": "Compostable",
-        "Styrofoam Container": "Non-Recyclable",
-        "Metal Spoon": "Recyclable",
-        "Tea Bag": "Compostable",
-        "Chip Bag": "Non-Recyclable",
-        "Cardboard Box": "Recyclable",
-        "Cotton Cloth": "Compostable",
-        "Plastic Straw": "Non-Recyclable",
-        "Egg Shells": "Compostable",
-        "Old Newspaper": "Recyclable",
-        "Expired Medication": "Non-Recyclable",
-        "Wooden Chopsticks": "Compostable",
-        "Broken Mirror": "Non-Recyclable",
-        "Milk Carton": "Recyclable"
+        "Plastic Bottle": "Recycling",
+        "Banana Peel": "Composting",
+        "Aluminum Can": "Recycling",
+        "Glass Jar": "Recycling",
+        "Pizza Box (Greasy)": "Composting",
+        "Paper Cup": "Composting",
+        "Styrofoam Container": "Landfill",
+        "Metal Spoon": "Recycling",
+        "Tea Bag": "Composting",
+        "Chip Bag": "Landfill",
+        "Cardboard Box": "Recycling",
+        "Cotton Cloth": "Organic Waste",
+        "Plastic Straw": "Landfill",
+        "Egg Shells": "Composting",
+        "Old Newspaper": "Recycling",
+        "Expired Medication": "Hazardous Waste",
+        "Wooden Chopsticks": "Composting",
+        "Broken Mirror": "Landfill",
+        "Milk Carton": "Recycling"
     }
     item = random.choice(list(waste_items.keys()))
     return item, waste_items[item]
@@ -83,7 +83,7 @@ def plot_accuracy_chart():
 
 st.title("Statistical Waste Sorting Challenge")
 
-st.write("Sort the waste item into the correct category: Recyclable, Compostable, or Non-Recyclable.")
+st.write("Sort the waste item into the correct category: Recycling, Composting, Landfill, Hazardous Waste, or Organic Waste.")
 
 if 'score' not in st.session_state:
     st.session_state.score = 0
@@ -96,7 +96,7 @@ if 'game_over' not in st.session_state:
 
 if not st.session_state.game_over:
     st.subheader(f"Waste Item: {st.session_state.current_item}")
-    user_choice = st.radio("Choose the correct category:", ["Recyclable", "Compostable", "Non-Recyclable"], key=st.session_state.attempts)
+    user_choice = st.radio("Choose the correct category:", ["Recycling", "Composting", "Landfill", "Hazardous Waste", "Organic Waste"], key=st.session_state.attempts)
     
     if st.button("Submit") and not st.session_state.game_over:
         save_data(st.session_state.current_item, user_choice, st.session_state.correct_category)
