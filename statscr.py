@@ -1,7 +1,5 @@
 import streamlit as st
-import pandas as pd
 import random
-from datetime import datetime, timedelta
 
 st.set_page_config(layout="wide")
 
@@ -109,16 +107,24 @@ if st.button("🔒 Submit Final Answer"):
     correct = user_guess == case["true_culprit"]
     
     # Verify logical consistency
-    occupation_match = occupation_weapon[case["suspects"][case["true_culprit"]]["occupation"]] == case["crime_types"][case["crime"]]["weapon"]
-    time_match = case["suspects"][case["true_culprit"]]["occupation"] in time_consistency[case["crime"].split()[-1].lower()]
-
-    if correct and occupation_match and time_match:
-        st.success("🎉 Perfect deduction! You identified the hidden patterns!")
-        st.balloons()
-    elif correct:
-        st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
+    crime_name = case["crime"]
+    if crime_name not in crime_types:
+        st.error("Invalid crime type. Please restart the game.")
     else:
-        st.error("❌ Incorrect. The truth hides in: Occupation-Weapon match + Typical schedule")
+        weapon = crime_types[crime_name]["weapon"]
+        occupation = case["suspects"][case["true_culprit"]]["occupation"]
+        time_period = crime_types[crime_name]["time"]
+        
+        occupation_match = occupation_weapon[occupation] == weapon
+        time_match = occupation in time_consistency[time_period]
+
+        if correct and occupation_match and time_match:
+            st.success("🎉 Perfect deduction! You identified the hidden patterns!")
+            st.balloons()
+        elif correct:
+            st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
+        else:
+            st.error("❌ Incorrect. The truth hides in: Occupation-Weapon match + Typical schedule")
 
 # ---------- Restart ----------
 if st.button("🔄 New Case"):
