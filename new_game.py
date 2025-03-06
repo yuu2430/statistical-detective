@@ -3,6 +3,10 @@ import random
 
 st.set_page_config(layout="wide")
 
+# ---------- Initialize Statistics ----------
+if "stats" not in st.session_state:
+    st.session_state.stats = {"games_played": 0, "wins": 0, "losses": 0}
+
 # ---------- Game Setup ----------
 st.title("🔍 Mystery Solver: Logical Deduction Challenge")
 st.write("Analyze subtle patterns and hidden clues. One clear truth emerges from multiple hints...")
@@ -72,12 +76,14 @@ def generate_case():
         "time_window": time_window[details["time"]],
         "true_culprit": culprit,
         "suspects": suspects,
-        "evidence": evidence
+        "evidence": evidence,
+        "crime_details": details  # storing details for later use
     }
 
-# Initialize game case if not set or when user requests a new one
-if "case" not in st.session_state or st.button("🔄 New Case"):
+# Initialize or reset game case
+if "case" not in st.session_state:
     st.session_state.case = generate_case()
+
 case = st.session_state.case
 
 def calculate_probabilities(case):
@@ -100,6 +106,13 @@ def calculate_probabilities(case):
 
 case["suspects"] = calculate_probabilities(case)
 
+# Display Game Statistics
+st.sidebar.header("📊 Game Statistics")
+stats = st.session_state.stats
+st.sidebar.write(f"Games Played: {stats['games_played']}")
+st.sidebar.write(f"Wins: {stats['wins']}")
+st.sidebar.write(f"Losses: {stats['losses']}")
+
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
 st.subheader("👥 Persons of Interest")
@@ -114,6 +127,7 @@ for i, name in enumerate(shuffled_suspect_names):
         st.write(f"**Occupation**: {info['occupation']}")
         with st.expander("Alibi"):
             st.write(info['alibi'])
+        st.write(f"**Match Probability**: {info['probability']}%")
 
 st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
@@ -124,6 +138,7 @@ st.subheader("🕵️ Logical Analysis")
 user_guess = st.selectbox("Select the culprit:", list(case["suspects"].keys()))
 
 if st.button("🔒 Submit Final Answer"):
+    st.session_state.stats["games_played"] += 1
     correct = user_guess == case["true_culprit"]
     weapon = generate_crime_types()[case["crime"]]["weapon"]
     occupation = case["suspects"][case["true_culprit"]]["occupation"]
@@ -132,15 +147,17 @@ if st.button("🔒 Submit Final Answer"):
     time_match = occupation in time_consistency[time_period]
     
     if correct and occupation_match and time_match:
+        st.session_state.stats["wins"] += 1
         st.success("🎉 Perfect deduction! You identified the hidden patterns!")
         st.balloons()
     elif correct:
+        st.session_state.stats["wins"] += 1
         st.warning("✅ Correct suspect, but did you catch the full pattern? (Occupation + Time + Weapon)")
     else:
-        # When wrong, reveal the culprit and end the game.
-        st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**. "
-                 "The game is now over.")
-        # Provide a button to start a new game.
-        if st.button("Play Again"):
-            st.session_state.case = generate_case()
-            st.experimental_rerun()
+        st.session_state.stats["losses"] += 1
+        st.error(f"❌ Incorrect. The culprit was **{case['true_culprit']}**. The game is now over.")
+    
+    # Offer an option to start a new game after a submission
+    if st.button("Play Again"):
+        st.session_state.case = generate_case()
+        st.experimental_rerun()
