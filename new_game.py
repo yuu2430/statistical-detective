@@ -5,7 +5,7 @@ st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
 st.title("🔍 Mystery Solver: Logical Deduction Challenge")
-st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
+st.write("Analyze subtle patterns and hidden clues. One clear truth emerges from multiple hints...")
 
 # ---------- Crime Data Generation ----------
 def generate_crime_types():
@@ -16,10 +16,6 @@ def generate_crime_types():
     }
 
 possible_occupations = ["Security Guard", "Electrician", "Delivery Driver", "Janitor", "Shop Owner"]
-possible_connections = [
-    "Works at crime scene", "Recently fired from site", "Regular route nearby", 
-    "Night shift worker", "Financial troubles"
-]
 
 occupation_weapon = {
     "Security Guard": "crowbar",
@@ -45,16 +41,15 @@ def generate_case():
         "afternoon": "2:00 PM - 4:00 PM"
     }
     
+    # Shuffle occupations to ensure unique assignment per suspect
     shuffled_occupations = random.sample(possible_occupations, len(possible_occupations))
-    shuffled_connections = random.sample(possible_connections, len(possible_connections))
     suspect_names = ["Alex", "Sam", "Jordan", "Taylor", "Casey"]
     random.shuffle(suspect_names)
     
     suspects = {}
     for i, name in enumerate(suspect_names):
         suspects[name] = {
-            "occupation": shuffled_occupations[i], 
-            "connection": shuffled_connections[i],
+            "occupation": shuffled_occupations[i],
             "alibi": random.choice([
                 'Was alone during the incident (weak alibi)',
                 'Claims to be running errands',
@@ -116,7 +111,6 @@ for i, name in enumerate(shuffled_suspect_names):
     with cols[i]:
         st.write(f"### {name}")
         st.write(f"**Occupation**: {info['occupation']}")
-        st.write(f"**Connection**: {info['connection']}")
         with st.expander("Alibi"):
             st.write(info['alibi'])
 
