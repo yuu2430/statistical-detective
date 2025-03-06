@@ -58,7 +58,7 @@ def visualize_stats():
 def reset_game():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.experimental_rerun()
+    st.rerun()
 
 def main():
     st.title("Sustainable Car Racing Game")
