@@ -21,7 +21,7 @@ def generate_crime_types():
         "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
     }
 
-# Possible suspect occupations, uniform colors, and accessories.
+# Possible suspect occupations (now unique), uniform colors, and accessories.
 possible_occupations = ["Security Guard", "Electrician", "Delivery Driver", "Janitor", "Shop Owner"]
 possible_uniforms = ["navy blue", "bright orange", "gray", "black", "green"]
 possible_accessories = ["cap", "scarf", "watch", "bag", "none"]
@@ -50,11 +50,14 @@ def generate_case():
     suspect_names = ["Alex", "Sam", "Jordan", "Taylor", "Casey"]
     random.shuffle(suspect_names)
     
-    # Generate suspect details randomly.
+    # Assign unique occupations by shuffling the list.
+    occupation_assignment = random.sample(possible_occupations, len(suspect_names))
+    
+    # Generate suspect details using the unique occupations.
     suspects = {}
-    for name in suspect_names:
+    for i, name in enumerate(suspect_names):
         suspects[name] = {
-            "occupation": random.choice(possible_occupations),
+            "occupation": occupation_assignment[i],
             "uniform": random.choice(possible_uniforms),
             "accessory": random.choice(possible_accessories),
             "alibi": random.choice([
@@ -71,12 +74,13 @@ def generate_case():
         name for name, info in suspects.items()
         if info["occupation"] == criteria["occupation"]
     ]
+    # Because occupations are unique, potential_culprits should contain exactly one name.
     if potential_culprits:
-        culprit = random.choice(potential_culprits)
+        culprit = potential_culprits[0]
     else:
         culprit = random.choice(suspect_names)
     
-    # The only public hint is the CCTV footage. Its description is ambiguous.
+    # The only public hint is the ambiguous CCTV footage.
     cctv_hint = f"Fuzzy CCTV footage shows a person wearing a {random.choice(possible_uniforms)} uniform. " \
                 "The face is blurred and details are scarce."
     
@@ -119,10 +123,9 @@ cols = st.columns(len(suspect_names))
 for i, name in enumerate(suspect_names):
     with cols[i]:
         st.write(f"### {name}")
-        # Details like occupation, uniform, or alibi are hidden from the player.
 
 st.subheader("🔎 Evidence")
-# Only the CCTV footage is intended as a clue, along with some generic evidence.
+# Only the ambiguous CCTV footage and generic evidence is visible.
 for title, detail in case["evidence"].items():
     with st.expander(title):
         st.write(detail)
