@@ -110,8 +110,8 @@ if st.button("🔒 Submit Final Answer"):
     
     # Verify logical consistency
     occupation_match = occupation_weapon[case["suspects"][case["true_culprit"]]["occupation"]] == case["crime_types"][case["crime"]]["weapon"]
-    time_match = case["suspects"][case["true_culprit"]]["occupation"] in time_consistency[case["crime"].split()[-1].lower()]]
-    
+    time_match = case["suspects"][case["true_culprit"]]["occupation"] in time_consistency[case["crime"].split()[-1].lower()]
+
     if correct and occupation_match and time_match:
         st.success("🎉 Perfect deduction! You identified the hidden patterns!")
         st.balloons()
