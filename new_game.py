@@ -14,6 +14,7 @@ crime_types = {
     "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
 }
 
+@st.cache_data
 def generate_case():
     crime_name, details = random.choice(list(crime_types.items()))
     time_window = {
@@ -162,5 +163,5 @@ if st.button("🔒 Submit Final Answer"):
 
 # ---------- Restart ----------
 if st.button("🔄 New Case"):
-    st.session_state.case = generate_case()  # Generate a new case
-    st.rerun()  # Restart the app
+    st.session_state.case = generate_case()
+    st.rerun()  # Use st.rerun() instead of st.experimental_rerun()
