@@ -4,14 +4,14 @@ import random
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.title("🔍 Sustainability Crime Solver")
-st.write("Step into the role of an investigator solving environmental crimes! Use logic and clues to find the culprit.")
+st.title("🔍 Mystery Solver")
+st.write("Step into the shoes of a detective and unravel the mystery! Follow the clues, interrogate suspects, and crack the case.")
 
 # ---------- Crime Data Generation ----------
 crime_types = {
-    "Illegal Waste Dumping": {"location": "Riverside", "time": "night", "weapon": "industrial truck"},
-    "Greenwashing Fraud": {"location": "Corporate Office", "time": "afternoon", "weapon": "forged documents"},
-    "Energy Theft": {"location": "Residential Area", "time": "evening", "weapon": "tampered meter"}
+    "Mall Robbery": {"location": "Mall", "time": "evening", "weapon": "crowbar"},
+    "Factory Arson": {"location": "Industrial Area", "time": "night", "weapon": "lighter"},
+    "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
 }
 
 def generate_case():
@@ -23,28 +23,28 @@ def generate_case():
     }
     
     suspects = {
-        "Alex": {"occupation": "Factory Owner", "connection": "Previously fined for illegal dumping"},
-        "Sam": {"occupation": "Corporate Executive", "connection": "Launched a 'green' campaign under investigation"},
-        "Jordan": {"occupation": "Truck Driver", "connection": "Frequently seen near illegal waste sites"},
-        "Taylor": {"occupation": "Electrician", "connection": "Worked on meters in the affected area"},
-        "Casey": {"occupation": "Real Estate Developer", "connection": "Owns land near contaminated sites"}
+        "Alex": {"occupation": "Security Guard", "connection": "Previously caught stealing at crime scene"},
+        "Sam": {"occupation": "Electrician", "connection": "Owed money to a shop owner in the area"},
+        "Jordan": {"occupation": "Delivery Driver", "connection": "Fired after a dispute with a victim"},
+        "Taylor": {"occupation": "Janitor", "connection": "Known for arguments with site manager"},
+        "Casey": {"occupation": "Shop Owner", "connection": "Fraud investigation linked to location"}
     }
     
     culprit = random.choice(list(suspects.keys()))
     
     evidence = {
-        "Security Footage": f"A blurry figure was spotted near {details['location']} at {random.choice(['10:30 PM', '7:15 PM', '3:45 PM'])}",
-        "Financial Records": f"Suspicious payments linked to {random.choice(['waste disposal', 'meter tampering', 'corporate fraud'])}",
-        "Witness Statement": f"Someone saw {random.choice(['a truck unloading waste', 'a person adjusting a meter', 'documents being shredded'])}, but their memory is unclear.",
-        "Digital Logs": f"Unauthorized activity detected at {details['time']} hours"
+        "Security Footage": f"Blurry figure seen leaving crime scene at {random.choice(['5:50 PM', '7:30 PM', '11:00 PM'])}",
+        "Tool Markings": f"Marks found that match a {details['weapon']} but also resemble common repair tools",
+        "Witness Account": f"One witness claimed to see {random.choice(['a tall person', 'a person with a limp', 'someone wearing a cap'])}, but another witness contradicted it",
+        "Digital Records": f"Suspicious activity logged, but logs seem tampered with"
     }
     
     alibis = {
-        "Alex": random.choice(["Claims to have been at a meeting, but no records exist", "Says he was at home, but no proof"]),
-        "Sam": random.choice(["Was in a board meeting, but left early", "Claims to be traveling, but flight records don’t match"]),
-        "Jordan": random.choice(["Truck logs were deleted that night", "Says another driver borrowed his truck"]),
-        "Taylor": random.choice(["Mentions a repair job, but no records exist", "Claims she left early, but GPS says otherwise"]),
-        "Casey": random.choice(["Says he was meeting investors, but no records exist", "Claims he was home, but security cameras say otherwise"])
+        "Alex": random.choice(["Claims to have been on duty but no logs exist", "Says they were taking a break alone"]),
+        "Sam": random.choice(["Claims to be at home, but phone was tracked near the scene", "Alibi provided by a close friend"]),
+        "Jordan": random.choice(["Mentions being on a call but no record exists", "Was seen near the area but insists it was a coincidence"]),
+        "Taylor": random.choice(["Says they left early, but logs say otherwise", "Claims to be running errands but receipt timestamps don't match"]),
+        "Casey": random.choice(["Claims store cameras were off", "Says they were dealing with a supplier, but supplier denies it"])
     }
     
     return {
