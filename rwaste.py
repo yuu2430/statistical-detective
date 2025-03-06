@@ -52,35 +52,6 @@ def show_statistics():
         st.write("### Player Performance Stats:")
         st.bar_chart(accuracy)
 
-def show_leaderboard():
-    """Display percentile ranking of players."""
-    file_name = "waste_sorting_data.csv"
-    if os.path.exists(file_name):
-        df = pd.read_csv(file_name)
-        total_games = df.groupby("User Choice")["Correct"].count()
-        correct_games = df.groupby("User Choice")["Correct"].sum()
-        accuracy = (correct_games / total_games * 100).fillna(0)
-        percentile_rank = accuracy.rank(pct=True) * 100
-        
-        st.write("### Leaderboard - Accuracy Percentile:")
-        for player, rank in percentile_rank.items():
-            st.write(f"{player}: {rank:.2f} percentile")
-
-def plot_accuracy_chart():
-    """Generate and display a smooth accuracy graph with improved aesthetics."""
-    file_name = "waste_sorting_data.csv"
-    if os.path.exists(file_name):
-        df = pd.read_csv(file_name)
-        accuracy = df.groupby("Waste Item")["Correct"].mean() * 100
-        
-        plt.figure(figsize=(10, 5))
-        sns.barplot(x=accuracy.index, y=accuracy.values, palette="coolwarm")
-        plt.xticks(rotation=45, ha='right', fontsize=12)
-        plt.ylabel("Accuracy (%)", fontsize=14)
-        plt.title("Player Accuracy by Waste Item", fontsize=16)
-        plt.grid(axis='y', linestyle='--', alpha=0.7)
-        st.pyplot(plt)
-
 st.title("Statistical Waste Sorting Challenge")
 
 st.write("Sort the waste item into the correct category: Recycling, Composting, Landfill, Hazardous Waste, or Organic Waste.")
@@ -120,13 +91,11 @@ st.write(f"Score: {st.session_state.score}/5")
 
 if st.session_state.game_over:
     if st.session_state.score == 5:
-        st.success("Amazing! You got all 5 correct! Want to play again?")
+        st.success("Amazing! You got all 5 correct! You win a toffee! hooray! yayy >v</")
     else:
         st.warning("Game Over! The correct category was: " + st.session_state.correct_category)
     st.write("Thanks for playing! :)")
     show_statistics()
-    show_leaderboard()
-    plot_accuracy_chart()
     if st.button("New Game"):
         st.session_state.score = 0
         st.session_state.attempts = 0
