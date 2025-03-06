@@ -2,6 +2,8 @@ import streamlit as st
 import random
 import pandas as pd
 import os
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def get_waste_item():
     """Returns a random waste item and its correct category."""
@@ -46,9 +48,9 @@ def show_statistics():
     if os.path.exists(file_name):
         df = pd.read_csv(file_name)
         accuracy = df.groupby("Waste Item")["Correct"].mean() * 100
+        
         st.write("### Player Performance Stats:")
-        for item, acc in accuracy.items():
-            st.write(f"{item}: {acc:.2f}% correct")
+        st.bar_chart(accuracy)
 
 def show_leaderboard():
     """Display percentile ranking of players."""
@@ -59,9 +61,24 @@ def show_leaderboard():
         correct_games = df.groupby("User Choice")["Correct"].sum()
         accuracy = (correct_games / total_games * 100).fillna(0)
         percentile_rank = accuracy.rank(pct=True) * 100
+        
         st.write("### Leaderboard - Accuracy Percentile:")
         for player, rank in percentile_rank.items():
             st.write(f"{player}: {rank:.2f} percentile")
+
+def plot_accuracy_chart():
+    """Generate and display a smooth accuracy graph."""
+    file_name = "waste_sorting_data.csv"
+    if os.path.exists(file_name):
+        df = pd.read_csv(file_name)
+        accuracy = df.groupby("Waste Item")["Correct"].mean() * 100
+        
+        plt.figure(figsize=(8, 4))
+        sns.barplot(x=accuracy.index, y=accuracy.values, palette="viridis")
+        plt.xticks(rotation=45, ha='right')
+        plt.ylabel("Accuracy (%)")
+        plt.title("Player Accuracy by Waste Item")
+        st.pyplot(plt)
 
 st.title("Statistical Waste Sorting Challenge")
 
@@ -108,6 +125,7 @@ if st.session_state.game_over:
     st.write("Thanks for playing! :)")
     show_statistics()
     show_leaderboard()
+    plot_accuracy_chart()
     if st.button("New Game"):
         st.session_state.score = 0
         st.session_state.attempts = 0
