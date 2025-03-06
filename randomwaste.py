@@ -48,26 +48,25 @@ if not st.session_state.game_over:
         if user_choice == st.session_state.correct_category:
             st.success("Correct! Well done.")
             st.session_state.score += 1
+            st.session_state.attempts += 1
+            
+            if st.session_state.score < 5:
+                st.session_state.current_item, st.session_state.correct_category = get_waste_item()
+                st.experimental_rerun()
+            else:
+                st.session_state.game_over = True
         else:
             st.error(f"Incorrect. The correct category is {st.session_state.correct_category}.")
             st.session_state.game_over = True
-        
-        st.session_state.attempts += 1
-        
-        if st.session_state.attempts < 5 and not st.session_state.game_over:
-            st.session_state.current_item, st.session_state.correct_category = get_waste_item()
-            st.experimental_rerun()
-        elif st.session_state.attempts >= 5:
-            st.session_state.game_over = True
     
-st.write(f"Score: {st.session_state.score}/{st.session_state.attempts}")
+st.write(f"Score: {st.session_state.score}/5")
 
 if st.session_state.game_over:
     if st.session_state.score == 5:
         st.success("Amazing! You got all 5 correct! Want to play again?")
     else:
         st.warning("Game Over! Try again.")
-    if st.button("Restart"):
+    if st.button("New Game"):
         st.session_state.score = 0
         st.session_state.attempts = 0
         st.session_state.game_over = False
