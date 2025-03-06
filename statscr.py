@@ -25,10 +25,10 @@ def generate_case():
     
     suspects = {
         "Alex": {"occupation": "Security Guard", "connection": "Works at crime scene"},
-        "Sam": {"occupation": "Electrician", "connection": "Recently fired from site"},
-        "Jordan": {"occupation": "Delivery Driver", "connection": "Regular route nearby"},
+        "Josh": {"occupation": "Electrician", "connection": "Recently fired from site"},
+        "Larsen": {"occupation": "Delivery Driver", "connection": "Regular route nearby"},
         "Taylor": {"occupation": "Janitor", "connection": "Night shift worker"},
-        "Casey": {"occupation": "Shop Owner", "connection": "Financial troubles"}
+        "Robert": {"occupation": "Shop Owner", "connection": "Financial troubles"}
     }
     
     culprit = random.choice(list(suspects.keys()))
