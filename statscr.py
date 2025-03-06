@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.title("🕵️ Enhanced Detective: Crack the Code")
+st.title("🕵️Crack the Code")
 st.write("Analyze clues, decode hidden messages, interrogate suspects, and unravel the mystery. Stay sharp, detective!")
 
 # ---------- Crime Report Setup ----------
