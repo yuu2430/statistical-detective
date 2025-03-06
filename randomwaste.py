@@ -13,12 +13,21 @@ def get_waste_item():
         "Styrofoam Container": "Non-Recyclable",
         "Metal Spoon": "Recyclable",
         "Tea Bag": "Compostable",
-        "Chip Bag": "Non-Recyclable"
+        "Chip Bag": "Non-Recyclable",
+        "Cardboard Box": "Recyclable",
+        "Cotton Cloth": "Compostable",
+        "Plastic Straw": "Non-Recyclable",
+        "Egg Shells": "Compostable",
+        "Old Newspaper": "Recyclable",
+        "Expired Medication": "Non-Recyclable",
+        "Wooden Chopsticks": "Compostable",
+        "Broken Mirror": "Non-Recyclable",
+        "Milk Carton": "Recyclable"
     }
     item = random.choice(list(waste_items.keys()))
     return item, waste_items[item]
 
-st.title("AI-Powered Recycling Game")
+st.title("AI-Powered Recycling Quiz")
 
 st.write("Sort the waste item into the correct category: Recyclable, Compostable, or Non-Recyclable.")
 
@@ -41,7 +50,20 @@ if st.button("Submit"):
         st.error(f"Incorrect. The correct category is {st.session_state.correct_category}.")
     
     st.session_state.attempts += 1
-    st.session_state.current_item, st.session_state.correct_category = get_waste_item()
+    
+    if st.session_state.attempts >= 5:
+        if st.session_state.score == 5:
+            st.success("Amazing! You got all 5 correct!")
+            if st.button("Play Again"):
+                st.session_state.score = 0
+                st.session_state.attempts = 0
+        else:
+            st.warning("Game Over! Try again.")
+            if st.button("Restart"):
+                st.session_state.score = 0
+                st.session_state.attempts = 0
+    else:
+        st.session_state.current_item, st.session_state.correct_category = get_waste_item()
     
 st.write(f"Score: {st.session_state.score}/{st.session_state.attempts}")
 
