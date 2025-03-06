@@ -4,7 +4,7 @@ import random
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.title("🔍 Mystery Solver: Logical Deduction Challenge")
+st.title("🔍 SOLVE A MYSTERY!")
 st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
 
 # ---------- Crime Data Generation ----------
@@ -81,7 +81,7 @@ for i, (name, info) in enumerate(case["suspects"].items()):
             st.write(case["alibis"][name])
 
 # ---------- Evidence Board ----------
-st.subheader("🔎 Compromised Evidence")
+st.subheader("🔎 Evidence")
 for title, detail in case["evidence"].items():
     with st.expander(title):
         st.write(detail + " (Some details may be misleading)")
