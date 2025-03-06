@@ -9,43 +9,40 @@ from sklearn.cluster import KMeans
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.title("🕵️ Statistical Detective: AI to the Rescue")
-st.write("A crime has been committed! Analyze clues, interrogate suspects, and solve the case. But beware—things are not always as they seem...")
+st.title("🕵️ Ultimate Detective Challenge")
+st.write("Analyze clues, interrogate suspects, and solve a crime where deception is key!")
 
 # ---------- Crime Report Setup ----------
 crime_reports = [
-    "💎 A priceless artifact was stolen from the museum. Witnesses saw a figure escape into the night!",
-    "🔥 A warehouse fire broke out under suspicious circumstances. Evidence suggests foul play.",
-    "💰 A high-stakes poker game ended in a heist. One player never made it home.",
-    "📞 A tech CEO was scammed out of millions. The cybercriminal left a cryptic digital footprint.",
+    "A rare artifact was stolen from the museum. The thief knew exactly what to take.",
+    "A high-profile scientist was poisoned at a conference. The suspect was among the attendees.",
+    "A CEO was found unconscious in his office. The security footage is missing a critical hour.",
+    "A journalist investigating corporate fraud disappeared. A cryptic note was found at the scene.",
 ]
 
 # ---------- Generate Crime Data ----------
 @st.cache_data
 def generate_crime_data():
-    locations = ["Museum", "Warehouse District", "Casino", "Tech Park", "City Square"]
-    suspects = ["John", "Sarah", "Mike", "Emma", "David"]
-    weapons = ["Crowbar", "Molotov", "Fake ID", "Hacking Device", "None"]
-    
+    locations = ["Museum", "Conference Hall", "Corporate Office", "Park"]
+    suspects = ["Alice", "Bob", "Charlie", "Dana", "Ethan"]
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
-    
-    for i in range(1, 6):
+
+    for i in range(5):
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
-        crime_time = f"{random.randint(0, 23)}:{random.randint(0, 59):02d}"
-        
+        crime_time = f"{random.randint(10, 23)}:{random.randint(0, 59):02d}"
+
         data.append({
-            "Case_ID": i,
+            "Case_ID": i + 1,
             "Crime_Report": random.choice(crime_reports),
             "Date": crime_date.strftime('%Y-%m-%d'),
             "Time": crime_time,
             "Location": random.choice(locations),
             "Suspect_Name": random.choice(suspects),
-            "Weapon_Used": random.choice(weapons),
-            "Outcome": random.choice(["Unsolved", "Solved"]),
+            "Motive": random.choice(["Revenge", "Financial Gain", "Accidental", "Framed"]),
+            "Lies": random.choice([True, False]),  # Some suspects will lie!
         })
-    
     return pd.DataFrame(data)
 
 df = generate_crime_data()
@@ -56,90 +53,73 @@ if "selected_case" not in st.session_state:
 selected_case = st.session_state.selected_case
 
 st.subheader("📜 Crime Report:")
-st.write(f"**{selected_case['Crime_Report']}**")
-st.write(f"📅 **Date:** {selected_case['Date']} | ⏰ **Time:** {selected_case['Time']} | 📍 **Location:** {selected_case['Location']}")
+st.write(selected_case["Crime_Report"])
+st.write(f"📅 Date: {selected_case['Date']} | ⏰ Time: {selected_case['Time']} | 📍 Location: {selected_case['Location']}")
 
-# ---------- Suspect Profiles ----------
+# ---------- Enriched Suspect Profiles ----------
 def generate_suspects(case):
-    background_info = {
-        "John": "A disgruntled ex-employee of the museum, fired last month.",
-        "Sarah": "An aspiring journalist investigating corporate fraud.",
-        "Mike": "A gambler with a history of rigging games.",
-        "Emma": "A digital security expert—who may have gone rogue.",
-        "David": "A night janitor who works in the crime location."
-    }
-    alibis = {
-        "John": "Claims to have been at a bar all night, but no receipts were found.",
-        "Sarah": "Says she was writing an article at home, alone.",
-        "Mike": "Insists he was in another casino across town.",
-        "Emma": "Claims she was fixing a security breach remotely.",
-        "David": "Was seen leaving work early but denies any wrongdoing."
-    }
-    
+    all_suspects = ["Alice", "Bob", "Charlie", "Dana", "Ethan"]
     culprit_name = case["Suspect_Name"]
-    all_names = list(background_info.keys())
-    decoy_names = [name for name in all_names if name != culprit_name]
-    random.shuffle(decoy_names)
+    random.shuffle(all_suspects)
     
-    suspects = [{
-        "Name": culprit_name,
-        "Role": "Culprit",
-        "Background": background_info.get(culprit_name, "No background available."),
-        "Alibi": alibis.get(culprit_name, "No alibi provided."),
-    }]
-    
-    for name in decoy_names[:2]:
+    suspects = []
+    for name in all_suspects[:3]:
+        is_culprit = name == culprit_name
         suspects.append({
             "Name": name,
-            "Role": "Decoy",
-            "Background": background_info.get(name, "No background available."),
-            "Alibi": alibis.get(name, "No alibi provided."),
+            "Motive": "Unknown" if not is_culprit else case["Motive"],
+            "Alibi": "Unconfirmed",  # Will be revealed in interrogation
+            "Lying": case["Lies"] if is_culprit else random.choice([True, False]),
         })
-    
     return suspects
 
 if "suspects" not in st.session_state:
     st.session_state.suspects = generate_suspects(selected_case)
 
-st.subheader("👥 Suspect Profiles")
+st.subheader("👥 Suspects")
 for suspect in st.session_state.suspects:
-    st.write(f"**{suspect['Name']}**")
-    st.write(f"_Background_: {suspect['Background']}")
-    st.write(f"_Alibi_: {suspect['Alibi']}")
+    st.write(f"**{suspect['Name']}** - Motive: {suspect['Motive']}")
     st.markdown("---")
 
+# ---------- Evidence Board ----------
+st.subheader("🔎 Evidence Board")
+evidence_items = [
+    {"title": "Security Footage", "detail": "Partially corrupted. A shadowy figure seen leaving at the time of the crime."},
+    {"title": "Fingerprint Analysis", "detail": "Two sets of prints found, but one is smudged."},
+    {"title": "Suspicious Transaction", "detail": "A large sum of money was withdrawn by a suspect before the crime."},
+    {"title": "Witness Statement", "detail": "A person in a dark hoodie was seen rushing out, but the witness isn't certain."},
+]
+random.shuffle(evidence_items)
+for item in evidence_items:
+    with st.expander(item["title"]):
+        st.write(item["detail"])
+
 # ---------- Interrogation ----------
-st.subheader("🗣️ Interrogate a Suspect")
-selected_suspect_name = st.selectbox("Select a suspect to interrogate:", [s["Name"] for s in st.session_state.suspects])
+st.subheader("🗣️ Interrogate Suspects")
+suspect_names = [s["Name"] for s in st.session_state.suspects]
+selected_suspect_name = st.selectbox("Choose a suspect to interrogate:", suspect_names, key="suspect_select")
 selected_suspect = next(s for s in st.session_state.suspects if s["Name"] == selected_suspect_name)
 
-questions = ["Where were you last night?", "Do you know the victim?", "What were you doing at the crime scene?"]
-selected_question = st.selectbox("Choose a question:", questions)
-
-responses = {
-    "Where were you last night?": {
-        "Culprit": "I was home, but I might have stepped out briefly...",
-        "Decoy": "I was at home all night, no one can dispute that."
-    },
-    "Do you know the victim?": {
-        "Culprit": "We’ve met a few times, but that’s all.",
-        "Decoy": "We worked together before. I had no issues with them."
-    },
-    "What were you doing at the crime scene?": {
-        "Culprit": "I had business nearby, that’s just a coincidence.",
-        "Decoy": "I wasn’t anywhere near that place."
-    }
-}
+questions = ["Where were you?", "Did you know the victim?", "Why were you seen near the crime scene?"]
+selected_question = st.selectbox("Choose a question:", questions, key="question_select")
 
 if st.button("🎙️ Ask Question"):
-    role = selected_suspect["Role"]
-    st.write(f"🕵️ {selected_suspect['Name']} answers: {responses[selected_question][role]}")
-
-# ---------- Final Guess ----------
-st.subheader("🕵️‍♂️ Make Your Final Guess")
-final_guess = st.selectbox("Who is the culprit?", [s["Name"] for s in st.session_state.suspects])
-if st.button("🚔 Submit Arrest Warrant"):
-    if final_guess == selected_case["Suspect_Name"]:
-        st.success(f"🎉 You solved the case! {final_guess} has been arrested.")
+    if selected_suspect["Lying"]:
+        st.write(f"🕵️ {selected_suspect['Name']} hesitates: 'Uh, I was just passing by, I guess...' 😬")
     else:
-        st.error(f"❌ Wrong suspect! The real culprit was {selected_case['Suspect_Name']}. Try again!")
+        st.write(f"🕵️ {selected_suspect['Name']} confidently replies: 'I was home all night, my roommate can confirm.' 😊")
+
+# ---------- Make the Final Guess ----------
+st.subheader("🚔 Make Your Arrest")
+final_guess = st.selectbox("Who is the culprit?", suspect_names, key="final_guess")
+if st.button("Submit Arrest Warrant"):
+    if final_guess == selected_case["Suspect_Name"]:
+        st.success("🎉 You solved the case! The suspect was guilty.")
+    else:
+        st.error("❌ Wrong suspect! The real culprit escapes.")
+
+# ---------- Restart Game ----------
+if st.button("🔄 New Case"):
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.suspects = generate_suspects(st.session_state.selected_case)
+    st.experimental_rerun()
