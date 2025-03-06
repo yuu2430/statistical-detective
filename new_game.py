@@ -84,6 +84,8 @@ def generate_case():
 if "case" not in st.session_state or st.session_state.get("restart", False):
     st.session_state.case = generate_case()
     st.session_state.restart = False  # Reset restart flag
+    st.rerun()  # Force a full refresh
+
 if "score" not in st.session_state:
     st.session_state.score = 0  # Track player score
 
