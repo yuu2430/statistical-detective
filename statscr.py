@@ -7,20 +7,6 @@ st.set_page_config(layout="wide")
 st.title("🔍 Mystery Solver: Logical Deduction Challenge")
 st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
 
-# ---------- Jujutsu Kaisen Character Images ----------
-jj_characters = [
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Yuji Itadori
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Megumi Fushiguro
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Nobara Kugisaki
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Satoru Gojo
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Suguru Geto
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Maki Zenin
-    "https://static.wikia.nocookie.net/jujutsu-kaisen/images/7/7e/Toge_Inumaki_%28Anime%29.png",  # Toge Inumaki
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Panda
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Kento Nanami
-    "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2023/11/itadori-yuji.jpg?q=50&fit=crop&w=1140&h=&dpr=1.5",  # Aoi Todo
-]
-
 # ---------- Crime Data Generation ----------
 crime_types = {
     "Mall Robbery": {"location": "Mall", "time": "evening", "weapon": "crowbar"},
@@ -73,30 +59,25 @@ case = st.session_state.case
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
 st.write(f"⏰ Time Window: {case['time_window']}")
 
+# ---------- Suspect Profiles ----------
+st.subheader("👥 Persons of Interest")
+for name, info in case["suspects"].items():
+    st.write(f"### {name}")
+    st.write(f"**Occupation**: {info['occupation']}")
+    st.write(f"**Connection**: {info['connection']}")
+    st.write(f"**Alibi**: {random.choice([
+        'Was alone during the incident',
+        'Claims to be running errands',
+        'Says they were helping a friend',
+        'Mentions being stuck in traffic'
+    ])}")
+    st.markdown("---")
+
 # ---------- Evidence Board ----------
 st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
     with st.expander(title):
         st.write(detail + " (Could match multiple suspects)")
-
-# ---------- Suspect Profiles ----------
-st.subheader("👥 Persons of Interest")
-for name, info in case["suspects"].items():
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        # Assign a random Jujutsu Kaisen character image
-        st.image(random.choice(jj_characters), width=100)
-    with col2:
-        st.write(f"### {name}")
-        st.write(f"**Occupation**: {info['occupation']}")
-        st.write(f"**Connection**: {info['connection']}")
-        st.write(f"**Alibi**: {random.choice([
-            'Was alone during the incident',
-            'Claims to be running errands',
-            'Says they were helping a friend',
-            'Mentions being stuck in traffic'
-        ])}")
-    st.markdown("---")
 
 # ---------- Deduction Mechanics ----------
 st.subheader("🕵️ Logical Analysis")
