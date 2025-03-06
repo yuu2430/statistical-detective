@@ -12,7 +12,7 @@ st.set_page_config(layout="wide")
 st.title("🕵️ Statistical Detective: AI to the Rescue")
 st.write("Solve the crime by analyzing clues, interrogating multiple suspects, and using AI insights!")
 
-# Crime Report Setup
+# ---------- Crime Report Setup ----------
 crime_reports = [
     "🔍 A robbery was reported at a mall. The suspect was last seen near the food court.",
     "🔥 A mysterious arson case occurred in an industrial area at midnight. Witnesses saw a shadowy figure.",
@@ -20,7 +20,7 @@ crime_reports = [
     "📞 A fraud case was reported downtown. The victim lost thousands due to an online scam.",
 ]
 
-# Generate crime data
+# ---------- Generate Crime Data ----------
 @st.cache_data
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
@@ -30,7 +30,6 @@ def generate_crime_data():
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
     
-    # Generate 5 cases for variety
     for i in range(1, 6):
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
         crime_time_minutes = random.randint(0, 1439)
@@ -42,7 +41,6 @@ def generate_crime_data():
             "Date": crime_date.strftime('%Y-%m-%d'),
             "Time": formatted_time,
             "Location": random.choice(locations),
-            # This will be used as the true culprit’s details
             "Suspect_Name": random.choice(["John", "Sarah", "Mike", "Emma", "David"]),
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female"]),
@@ -54,120 +52,145 @@ def generate_crime_data():
 
 df = generate_crime_data()
 
-# Select a random case for the detective
+# ---------- Select a Random Case ----------
 if "selected_case" not in st.session_state:
     st.session_state.selected_case = df.sample(1).iloc[0]
-
 selected_case = st.session_state.selected_case
 
-# ---------- Crime Report ----------
 st.subheader("📜 Crime Report:")
 st.write(selected_case["Crime_Report"])
 st.write(f"📅 Date: {selected_case['Date']} | ⏰ Time: {selected_case['Time']} | 📍 Location: {selected_case['Location']}")
 
-# ---------- Generate Suspects ----------
+# ---------- Enriched Suspect Profiles ----------
 def generate_suspects(case):
-    """Generate a list of suspect profiles including one culprit and two decoys."""
+    """Generate a list of suspect profiles with detailed backgrounds and alibis."""
+    background_info = {
+        "John": "Has a history of petty theft but no major crimes.",
+        "Sarah": "Worked as a security guard at a local mall.",
+        "Mike": "Recently lost his job and has financial troubles.",
+        "Emma": "A quiet person with few friends; often keeps to herself.",
+        "David": "Well-known in the community for charity work."
+    }
+    alibis = {
+        "John": "Claimed to have been at a local diner around the time of the crime.",
+        "Sarah": "Stated she was on a late shift at the mall.",
+        "Mike": "Said he was visiting a friend in a nearby town.",
+        "Emma": "Insisted she was at home, reading all evening.",
+        "David": "Mentioned he was out running errands."
+    }
+    
     culprit = {
          "Name": case["Suspect_Name"],
          "Age": case["Suspect_Age"],
          "Gender": case["Suspect_Gender"],
-         "Role": "Culprit"
+         "Role": "Culprit",
+         "Background": background_info[case["Suspect_Name"]],
+         "Alibi": alibis[case["Suspect_Name"]]
     }
-    # List of possible names
     all_names = ["John", "Sarah", "Mike", "Emma", "David"]
     decoy_names = [name for name in all_names if name != case["Suspect_Name"]]
+    decoy1_name = random.choice(decoy_names)
     decoy1 = {
-         "Name": random.choice(decoy_names),
+         "Name": decoy1_name,
          "Age": random.randint(18, 50),
          "Gender": random.choice(["Male", "Female"]),
-         "Role": "Decoy"
+         "Role": "Decoy",
+         "Background": background_info[decoy1_name],
+         "Alibi": alibis[decoy1_name]
     }
-    decoy_names = [name for name in decoy_names if name != decoy1["Name"]]
+    decoy_names = [name for name in decoy_names if name != decoy1_name]
+    decoy2_name = random.choice(decoy_names)
     decoy2 = {
-         "Name": random.choice(decoy_names),
+         "Name": decoy2_name,
          "Age": random.randint(18, 50),
          "Gender": random.choice(["Male", "Female"]),
-         "Role": "Decoy"
+         "Role": "Decoy",
+         "Background": background_info[decoy2_name],
+         "Alibi": alibis[decoy2_name]
     }
     return [culprit, decoy1, decoy2]
 
 if "suspects" not in st.session_state:
     st.session_state.suspects = generate_suspects(selected_case)
 
-# Display suspect profiles (names only for now)
-st.subheader("👥 Suspect List")
+st.subheader("👥 Suspect List (Detailed)")
 for suspect in st.session_state.suspects:
-    st.write(f"- **{suspect['Name']}**")
+    st.write(f"**{suspect['Name']}** | Age: {suspect['Age']} | Gender: {suspect['Gender']}")
+    st.write(f"_Background_: {suspect['Background']}")
+    st.write(f"_Alibi_: {suspect['Alibi']}")
+    st.markdown("---")
 
-# ---------- Clue Board UI ----------
-st.subheader("🔎 Clue Board")
-clues = [
-    f"👤 A witness mentioned a suspect that looks like {st.session_state.suspects[0]['Name']}.",
-    f"🕒 The crime happened around {selected_case['Time']}.",
-    f"🔪 Weapon involved: {selected_case['Weapon_Used']}.",
+# ---------- Interactive Evidence Board ----------
+st.subheader("🔎 Evidence Board")
+# Evidence items include forensic clues and timeline hints.
+evidence_items = [
+    {"title": "Fingerprint Analysis", "detail": "The fingerprints found on the crime scene match a known profile."},
+    {"title": "DNA Sample", "detail": "A partial DNA match was found, suggesting the suspect has been at the scene before."},
+    {"title": "CCTV Footage", "detail": f"Footage shows a figure resembling {st.session_state.suspects[0]['Name']} near the location."},
+    {"title": "Time-stamped Call", "detail": "A call was placed at the time of the crime, possibly linking a suspect."},
 ]
 
-# Reveal clues step by step
-if "clue_index" not in st.session_state:
-    st.session_state.clue_index = 0
+# Allow players to click on evidence items to reveal more info
+for idx, item in enumerate(evidence_items):
+    with st.expander(item["title"]):
+        st.write(item["detail"])
 
-if st.button("🔍 Reveal Next Clue"):
-    if st.session_state.clue_index < len(clues):
-        st.session_state.clue_index += 1
+# ---------- Timeline of Events ----------
+st.subheader("🕰️ Timeline of Events")
+timeline = [
+    {"time": selected_case["Time"], "event": "Crime reported at the scene."},
+    {"time": "11:30 PM", "event": "A suspicious call was made."},
+    {"time": "11:45 PM", "event": "CCTV captures a potential suspect near the area."},
+    {"time": "12:15 AM", "event": "Forensic team arrives at the scene."},
+]
+for event in timeline:
+    st.write(f"**{event['time']}**: {event['event']}")
 
-for i in range(st.session_state.clue_index):
-    st.write(clues[i])
-
-# ---------- Interrogation Section ----------
+# ---------- Enhanced Interrogation Mechanics ----------
 st.subheader("🗣️ Interrogate Suspects")
-# Define possible questions and responses
 question_list = [
     "Where were you last night?",
     "Do you know the victim?",
     "What were you doing at the crime scene?"
 ]
 
-# Responses vary by suspect role (Culprit vs. Decoy)
+# Branching responses with nonverbal cues (simulated by text hints)
 responses = {
     "Where were you last night?": {
-        "Culprit": "I was at home... though I did step out for a bit.",
-        "Decoy": "I was home with my family all night."
+        "Culprit": {"answer": "I was at home... though I did step out for a bit.", "cue": "😬 (Avoiding eye contact)"},
+        "Decoy": {"answer": "I was home with my family all night.", "cue": "🙂 (Confident)"},
     },
     "Do you know the victim?": {
-        "Culprit": "I barely knew the victim.",
-        "Decoy": "Yes, we used to work together."
+        "Culprit": {"answer": "I barely knew the victim.", "cue": "😶 (Hesitant)"},
+        "Decoy": {"answer": "Yes, we used to work together.", "cue": "😊 (Relaxed)"},
     },
     "What were you doing at the crime scene?": {
-        "Culprit": "I was just passing by, nothing more.",
-        "Decoy": "I wasn't anywhere near that area."
+        "Culprit": {"answer": "I was just passing by, nothing more.", "cue": "😕 (Uncertain)"},
+        "Decoy": {"answer": "I wasn't anywhere near that area.", "cue": "😎 (Calm)"},
     }
 }
 
-# Let player select a suspect to interrogate
 suspect_names = [s["Name"] for s in st.session_state.suspects]
 selected_suspect_name = st.selectbox("Select a suspect to interrogate:", suspect_names, key="suspect_select")
-
-# Get the suspect object from the list
 selected_suspect = next(s for s in st.session_state.suspects if s["Name"] == selected_suspect_name)
-
 selected_question = st.selectbox("Select a question to ask:", question_list, key="question_select")
 
 if st.button("🎙️ Ask Question"):
-    # Determine the suspect's role for response selection
     role = selected_suspect["Role"]
-    answer = responses[selected_question][role]
-    st.write(f"🕵️ {selected_suspect['Name']} answers: {answer}")
+    reply = responses[selected_question][role]
+    st.write(f"🕵️ {selected_suspect['Name']} answers: {reply['answer']} {reply['cue']}")
 
 # ---------- AI-Assisted Crime Pattern Detection ----------
 st.subheader("📊 AI Crime Analysis")
-
 location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
 df["Location_Code"] = df["Location"].map(location_map)
 
-# Use K-Means clustering to assign crime zones
+# K-Means clustering on location and weapon used (as a proxy to add dimension)
+weapon_map = {"Knife": 0, "Gun": 1, "None": 2}
+df["Weapon_Code"] = df["Weapon_Used"].map(weapon_map)
+
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location_Code"]])
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Weapon_Code"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "Hotspot A", 1: "Hotspot B", 2: "Hotspot C"})
 
 zone_hint = df[df['Location'] == selected_case['Location']]['Cluster_Location'].values[0]
@@ -177,9 +200,7 @@ st.write("📈 AI analysis indicates this area has a high probability of recurri
 # ---------- Make the Final Guess ----------
 st.subheader("🕵️‍♂️ Make Your Final Guess")
 final_guess = st.selectbox("Who is the culprit?", suspect_names, key="final_guess")
-
 if st.button("🚔 Submit Arrest Warrant"):
-    # The culprit is the suspect with Role "Culprit"
     culprit = next(s for s in st.session_state.suspects if s["Role"] == "Culprit")
     if final_guess == culprit["Name"]:
         st.success(f"🎉 You solved the case! {culprit['Name']} has been arrested.")
@@ -190,5 +211,4 @@ if st.button("🚔 Submit Arrest Warrant"):
 if st.button("🔄 New Case"):
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.suspects = generate_suspects(st.session_state.selected_case)
-    st.session_state.clue_index = 0
     st.experimental_rerun()
