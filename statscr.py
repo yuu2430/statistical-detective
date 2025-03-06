@@ -4,17 +4,8 @@ import random
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.markdown(
-    """
-    <h1 style='text-align: center; color: #FF6F61; font-family: "Comic Sans MS", cursive;'>
-        🕵️‍♀️ Mystery Solver: Logical Deduction Challenge 🕵️‍♂️
-    </h1>
-    <p style='text-align: center; color: #6B5B95; font-family: "Comic Sans MS", cursive;'>
-        Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...
-    </p>
-    """,
-    unsafe_allow_html=True
-)
+st.title("🔍 Mystery Solver: Logical Deduction Challenge")
+st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
 
 # ---------- Crime Data Generation ----------
 crime_types = {
@@ -65,90 +56,34 @@ if "case" not in st.session_state:
 case = st.session_state.case
 
 # ---------- Game Interface ----------
-st.markdown(
-    f"""
-    <h2 style='color: #88B04B; font-family: "Comic Sans MS", cursive;'>
-        🚨 Case: {case['crime']} at {case['location']}
-    </h2>
-    <p style='color: #6B5B95; font-family: "Comic Sans MS", cursive;'>
-        ⏰ Time Window: {case['time_window']}
-    </p>
-    """,
-    unsafe_allow_html=True
-)
+st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
+st.write(f"⏰ Time Window: {case['time_window']}")
 
 # ---------- Suspect Profiles in Columns ----------
-st.markdown(
-    """
-    <h2 style='color: #FF6F61; font-family: "Comic Sans MS", cursive;'>
-        👥 Persons of Interest
-    </h2>
-    """,
-    unsafe_allow_html=True
-)
-
+st.subheader("👥 Persons of Interest")
 cols = st.columns(len(case["suspects"]))  # Create columns for each suspect
 
 for i, (name, info) in enumerate(case["suspects"].items()):
     with cols[i]:
-        st.markdown(
-            f"""
-            <div style='background-color: #F7CAC9; padding: 10px; border-radius: 10px;'>
-                <h3 style='color: #6B5B95; font-family: "Comic Sans MS", cursive;'>
-                    🧑‍💼 {name}
-                </h3>
-                <p style='color: #6B5B95; font-family: "Comic Sans MS", cursive;'>
-                    <b>Occupation</b>: {info['occupation']}
-                </p>
-                <p style='color: #6B5B95; font-family: "Comic Sans MS", cursive;'>
-                    <b>Connection</b>: {info['connection']}
-                </p>
-                <details style='color: #6B5B95; font-family: "Comic Sans MS", cursive;'>
-                    <summary><b>Alibi</b></summary>
-                    <p>{random.choice([
-                        'Was alone during the incident',
-                        'Claims to be running errands',
-                        'Says they were helping a friend',
-                        'Mentions being stuck in traffic'
-                    ])}</p>
-                </details>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.write(f"### {name}")
+        st.write(f"**Occupation**: {info['occupation']}")
+        st.write(f"**Connection**: {info['connection']}")
+        with st.expander("Alibi"):
+            st.write(random.choice([
+                'Was alone during the incident',
+                'Claims to be running errands',
+                'Says they were helping a friend',
+                'Mentions being stuck in traffic'
+            ]))
 
-# ---------- Evidence Board ----------
-st.markdown(
-    """
-    <h2 style='color: #FF6F61; font-family: "Comic Sans MS", cursive;'>
-        🔎 Compromised Evidence
-    </h2>
-    """,
-    unsafe_allow_html=True
-)
-
+# ---------- Evidence Board in Expandable Sections ----------
+st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
-    with st.expander(f"🔍 {title}"):
-        st.markdown(
-            f"""
-            <div style='background-color: #D5F5E3; padding: 10px; border-radius: 10px;'>
-                <p style='color: #6B5B95; font-family: "Comic Sans MS", cursive;'>
-                    {detail} (Could match multiple suspects)
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    with st.expander(title):
+        st.write(detail + " (Could match multiple suspects)")
 
 # ---------- Deduction Mechanics ----------
-st.markdown(
-    """
-    <h2 style='color: #FF6F61; font-family: "Comic Sans MS", cursive;'>
-        🕵️ Logical Analysis
-    </h2>
-    """,
-    unsafe_allow_html=True
-)
+st.subheader("🕵️ Logical Analysis")
 
 # Hidden connection system
 occupation_weapon = {
@@ -194,4 +129,3 @@ if st.button("🔒 Submit Final Answer"):
 if st.button("🔄 New Case"):
     st.session_state.case = generate_case()
     st.experimental_rerun()
-    
