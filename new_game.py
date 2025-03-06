@@ -51,17 +51,17 @@ def generate_case():
     shuffled_occupations = random.sample(possible_occupations, len(possible_occupations))
     shuffled_connections = random.sample(possible_connections, len(possible_connections))
     
+    # Shuffle suspect names each time
+    suspect_names = random.sample(["Alex", "Sam", "Jordan", "Taylor", "Casey"], 5)
+
     # Create suspects with shuffled occupations and connections
     suspects = {
-        "Alex": {"occupation": shuffled_occupations[0], "connection": shuffled_connections[0]},
-        "Sam": {"occupation": shuffled_occupations[1], "connection": shuffled_connections[1]},
-        "Jordan": {"occupation": shuffled_occupations[2], "connection": shuffled_connections[2]},
-        "Taylor": {"occupation": shuffled_occupations[3], "connection": shuffled_connections[3]},
-        "Casey": {"occupation": shuffled_occupations[4], "connection": shuffled_connections[4]}
+        suspect_names[i]: {"occupation": shuffled_occupations[i], "connection": shuffled_connections[i]}
+        for i in range(5)
     }
     
     # Randomly select the culprit
-    culprit = random.choice(list(suspects.keys()))
+    culprit = random.choice(suspect_names)
     
     # Create subtle evidence patterns
     evidence = {
@@ -80,9 +80,10 @@ def generate_case():
         "evidence": evidence
     }
 
-# Initialize session state
-if "case" not in st.session_state:
+# Initialize or reset session state
+if "case" not in st.session_state or st.session_state.get("restart", False):
     st.session_state.case = generate_case()
+    st.session_state.restart = False  # Reset restart flag
 if "score" not in st.session_state:
     st.session_state.score = 0  # Track player score
 
@@ -181,5 +182,5 @@ if st.button("🔒 Submit Final Answer"):
 
 # ---------- Restart ----------
 if st.button("🔄 New Case"):
-    st.session_state.case = generate_case()
-    st.rerun()  # Use st.rerun() instead of st.experimental_rerun()
+    st.session_state.restart = True
+    st.rerun()
