@@ -4,8 +4,8 @@ import random
 st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
-st.title("🔍 SOLVE A MYSTERY!")
-st.write("Analyze subtle patterns and hidden connections. One clear truth emerges from multiple lies...")
+st.title("🔍 Mystery Solver: Logical Deduction Challenge")
+st.write("Step into the shoes of a detective and unravel the mystery! Follow the clues, interrogate suspects, and crack the case.")
 
 # ---------- Crime Data Generation ----------
 crime_types = {
@@ -81,7 +81,7 @@ for i, (name, info) in enumerate(case["suspects"].items()):
             st.write(case["alibis"][name])
 
 # ---------- Evidence Board ----------
-st.subheader("🔎 Evidence")
+st.subheader("🔎 Compromised Evidence")
 for title, detail in case["evidence"].items():
     with st.expander(title):
         st.write(detail + " (Some details may be misleading)")
@@ -99,8 +99,9 @@ if st.button("🔒 Submit Final Answer"):
         st.balloons()
     else:
         st.error("❌ Incorrect. The game has ended.")
-        if st.button("🔄 New case"):
-            st.session_state.case = generate_case()
-            st.rerun()
     
     st.write(f"🏆 Your current score: {st.session_state.score}")
+    
+    if st.button("🔄 New Case"):
+        st.session_state.case = generate_case()
+        st.rerun()
