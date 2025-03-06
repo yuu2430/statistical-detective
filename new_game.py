@@ -1,9 +1,5 @@
 import streamlit as st
 import random
-import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import LabelEncoder
 
 st.set_page_config(layout="wide")
 
@@ -18,8 +14,32 @@ crime_types = {
     "Suburban Burglary": {"location": "Suburbs", "time": "afternoon", "weapon": "screwdriver"}
 }
 
+# Define possible occupations and connections
+possible_occupations = ["Security Guard", "Electrician", "Delivery Driver", "Janitor", "Shop Owner"]
+possible_connections = [
+    "Works at crime scene", "Recently fired from site", "Regular route nearby", 
+    "Night shift worker", "Financial troubles"
+]
+
+# Define occupation_weapon globally
+occupation_weapon = {
+    "Security Guard": "crowbar",
+    "Electrician": "screwdriver",
+    "Delivery Driver": "crowbar",
+    "Janitor": "lighter",
+    "Shop Owner": "screwdriver"
+}
+
+# Define time_consistency globally
+time_consistency = {
+    "evening": ["Security Guard", "Shop Owner"],
+    "night": ["Janitor", "Electrician"],
+    "afternoon": ["Delivery Driver", "Shop Owner"]
+}
+
 @st.cache_data
 def generate_case():
+    # Randomly select a crime type
     crime_name, details = random.choice(list(crime_types.items()))
     time_window = {
         "evening": "6:00 PM - 8:00 PM",
@@ -27,14 +47,20 @@ def generate_case():
         "afternoon": "2:00 PM - 4:00 PM"
     }
     
+    # Shuffle occupations and connections
+    shuffled_occupations = random.sample(possible_occupations, len(possible_occupations))
+    shuffled_connections = random.sample(possible_connections, len(possible_connections))
+    
+    # Create suspects with shuffled occupations and connections
     suspects = {
-        "Alex": {"occupation": "Security Guard", "connection": "Works at crime scene"},
-        "Sam": {"occupation": "Electrician", "connection": "Recently fired from site"},
-        "Jordan": {"occupation": "Delivery Driver", "connection": "Regular route nearby"},
-        "Taylor": {"occupation": "Janitor", "connection": "Night shift worker"},
-        "Casey": {"occupation": "Shop Owner", "connection": "Financial troubles"}
+        "Alex": {"occupation": shuffled_occupations[0], "connection": shuffled_connections[0]},
+        "Sam": {"occupation": shuffled_occupations[1], "connection": shuffled_connections[1]},
+        "Jordan": {"occupation": shuffled_occupations[2], "connection": shuffled_connections[2]},
+        "Taylor": {"occupation": shuffled_occupations[3], "connection": shuffled_connections[3]},
+        "Casey": {"occupation": shuffled_occupations[4], "connection": shuffled_connections[4]}
     }
     
+    # Randomly select the culprit
     culprit = random.choice(list(suspects.keys()))
     
     # Create subtle evidence patterns
@@ -62,37 +88,33 @@ if "score" not in st.session_state:
 
 case = st.session_state.case
 
-# ---------- Machine Learning Model ----------
-def train_model(case):
+# ---------- Calculate Probabilities ----------
+def calculate_probabilities(case):
     suspects = case["suspects"]
     weapon = crime_types[case["crime"]]["weapon"]
     time_period = crime_types[case["crime"]]["time"]
     
-    data = []
     for name, info in suspects.items():
-        data.append([
-            info["occupation"],
-            weapon,
-            time_period,
-            1 if name == case["true_culprit"] else 0
-        ])
+        probability = 0
+        
+        # Occupation-Weapon Match (30% weight)
+        if occupation_weapon[info["occupation"]] == weapon:
+            probability += 30
+        
+        # Time Consistency (20% weight)
+        if info["occupation"] in time_consistency[time_period]:
+            probability += 20
+        
+        # Randomize alibi strength (10% weight)
+        if "weak" in info.get("alibi", ""):
+            probability += 10
+        
+        suspects[name]["probability"] = min(probability, 100)  # Cap at 100%
     
-    df = pd.DataFrame(data, columns=["Occupation", "Weapon", "Time", "Culprit"])
-    
-    le = LabelEncoder()
-    df["Occupation"] = le.fit_transform(df["Occupation"])
-    df["Weapon"] = le.fit_transform(df["Weapon"])
-    df["Time"] = le.fit_transform(df["Time"])
-    
-    X = df[["Occupation", "Weapon", "Time"]]
-    y = df["Culprit"]
-    
-    model = DecisionTreeClassifier()
-    model.fit(X, y)
-    
-    return model, le
+    return suspects
 
-model, le = train_model(case)
+# Update suspect profiles with probabilities
+case["suspects"] = calculate_probabilities(case)
 
 # ---------- Game Interface ----------
 st.subheader(f"🚨 Case: {case['crime']} at {case['location']}")
@@ -100,9 +122,13 @@ st.write(f"⏰ Time Window: {case['time_window']}")
 
 # ---------- Suspect Profiles in Columns ----------
 st.subheader("👥 Persons of Interest")
-cols = st.columns(len(case["suspects"]))  # Create columns for each suspect
 
-for i, (name, info) in enumerate(case["suspects"].items()):
+# Shuffle the order of suspect names for display
+shuffled_suspect_names = random.sample(list(case["suspects"].keys()), len(case["suspects"]))
+cols = st.columns(len(shuffled_suspect_names))  # Create columns for each suspect
+
+for i, name in enumerate(shuffled_suspect_names):
+    info = case["suspects"][name]
     with cols[i]:
         st.write(f"### {name}")
         st.write(f"**Occupation**: {info['occupation']}")
