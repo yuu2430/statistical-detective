@@ -110,7 +110,7 @@ def generate_suspects(case):
 if "suspects" not in st.session_state:
     st.session_state.suspects = generate_suspects(selected_case)
 
-st.subheader("👥 Suspect List (Detailed)")
+st.subheader("👥 Suspect List")
 for suspect in st.session_state.suspects:
     st.write(f"**{suspect['Name']}** | Age: {suspect['Age']} | Gender: {suspect['Gender']}")
     st.write(f"_Background_: {suspect['Background']}")
