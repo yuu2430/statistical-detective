@@ -10,12 +10,12 @@ st.set_page_config(layout="wide")
 
 # ---------- Game Setup ----------
 st.title("🕵️ Statistical Detective: AI to the Rescue")
-st.write("Solve the crime by analyzing clues, interrogating multiple suspects, and using AI insights!")
+st.write("Analyze clues, interrogate suspects, and piece together the mystery. Not everything is as it seems...")
 
 # ---------- Crime Report Setup ----------
 crime_reports = [
     "🔍 A robbery was reported at a mall. The suspect was last seen near the food court.",
-    "🔥 A mysterious arson case occurred in an industrial area at midnight. Witnesses saw a shadowy figure.",
+    "🔥 A mysterious arson case occurred in an industrial area at midnight. Witnesses reported a shadowy figure.",
     "💰 A burglary took place in the suburbs. The suspect fled on foot before police arrived.",
     "📞 A fraud case was reported downtown. The victim lost thousands due to an online scam.",
 ]
@@ -23,7 +23,6 @@ crime_reports = [
 # ---------- Generate Crime Data ----------
 @st.cache_data
 def generate_crime_data():
-    crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
     locations = ["Downtown", "City Park", "Suburbs", "Industrial Area", "Mall"]
     data = []
     
@@ -67,7 +66,7 @@ def generate_suspects(case):
     background_info = {
         "John": "Has a history of petty theft but no major crimes.",
         "Sarah": "Worked as a security guard at a local mall.",
-        "Mike": "Recently lost his job and has financial troubles.",
+        "Mike": "Recently lost his job and has mounting financial troubles.",
         "Emma": "A quiet person with few friends; often keeps to herself.",
         "David": "Well-known in the community for charity work."
     }
@@ -110,7 +109,7 @@ def generate_suspects(case):
 if "suspects" not in st.session_state:
     st.session_state.suspects = generate_suspects(selected_case)
 
-st.subheader("👥 Suspect List")
+st.subheader("👥 Suspect List (Detailed)")
 for suspect in st.session_state.suspects:
     st.write(f"**{suspect['Name']}** | Age: {suspect['Age']} | Gender: {suspect['Gender']}")
     st.write(f"_Background_: {suspect['Background']}")
@@ -119,14 +118,17 @@ for suspect in st.session_state.suspects:
 
 # ---------- Interactive Evidence Board ----------
 st.subheader("🔎 Evidence Board")
-# Evidence items include forensic clues and timeline hints.
+# Define a list of ambiguous evidence clues that do not always point to the culprit.
 evidence_items = [
-    {"title": "Fingerprint Analysis", "detail": "The fingerprints found on the crime scene match a known profile."},
-    {"title": "DNA Sample", "detail": "A partial DNA match was found, suggesting the suspect has been at the scene before."},
-    {"title": "CCTV Footage", "detail": f"Footage shows a figure resembling {st.session_state.suspects[0]['Name']} near the location."},
-    {"title": "Time-stamped Call", "detail": "A call was placed at the time of the crime, possibly linking a suspect."},
+    {"title": "Fingerprint Analysis", "detail": "Fingerprints were found at the scene. The match is inconclusive; multiple profiles are similar."},
+    {"title": "DNA Sample", "detail": "DNA samples reveal partial matches from several individuals."},
+    {"title": "CCTV Footage", "detail": "Footage shows a figure in a hoodie, but the quality is too low to make a clear identification."},
+    {"title": "Time-stamped Call", "detail": "A call was placed near the crime scene. The caller's identity is uncertain."},
+    {"title": "Forensic Report", "detail": "Forensic analysis shows unusual chemical traces that could belong to anyone working in the area."},
 ]
 
+# Randomize the order of clues each time the evidence board is shown.
+random.shuffle(evidence_items)
 for item in evidence_items:
     with st.expander(item["title"]):
         st.write(item["detail"])
@@ -135,10 +137,13 @@ for item in evidence_items:
 st.subheader("🕰️ Timeline of Events")
 timeline = [
     {"time": selected_case["Time"], "event": "Crime reported at the scene."},
-    {"time": "11:30 PM", "event": "A suspicious call was made."},
-    {"time": "11:45 PM", "event": "CCTV captures a potential suspect near the area."},
-    {"time": "12:15 AM", "event": "Forensic team arrives at the scene."},
+    {"time": "11:30 PM", "event": "A suspicious call was made in the vicinity."},
+    {"time": "11:45 PM", "event": "CCTV captures multiple figures near the area."},
+    {"time": "12:15 AM", "event": "Forensic team arrives at the scene; unusual traces are found."},
 ]
+# Randomly mix in an extra timeline event as a red herring.
+timeline.append({"time": "12:30 AM", "event": "A passerby reported seeing a different figure lurking nearby."})
+timeline = sorted(timeline, key=lambda x: x["time"])
 for event in timeline:
     st.write(f"**{event['time']}**: {event['event']}")
 
@@ -150,18 +155,19 @@ question_list = [
     "What were you doing at the crime scene?"
 ]
 
+# Introduce more ambiguous interrogation responses.
 responses = {
     "Where were you last night?": {
-        "Culprit": {"answer": "I was at home... though I did step out for a bit.", "cue": "😬 (Avoiding eye contact)"},
-        "Decoy": {"answer": "I was home with my family all night.", "cue": "🙂 (Confident)"},
+        "Culprit": {"answer": "I was at home... though I did step out briefly. I might have been seen.", "cue": "😬 (Evasive)"},
+        "Decoy": {"answer": "I was home with my family all night, no one can dispute that.", "cue": "🙂 (Confident)"},
     },
     "Do you know the victim?": {
-        "Culprit": {"answer": "I barely knew the victim.", "cue": "😶 (Hesitant)"},
-        "Decoy": {"answer": "Yes, we used to work together.", "cue": "😊 (Relaxed)"},
+        "Culprit": {"answer": "We were acquaintances; nothing more.", "cue": "😶 (Uncertain)"},
+        "Decoy": {"answer": "Yes, we even worked together at times.", "cue": "😊 (Relaxed)"},
     },
     "What were you doing at the crime scene?": {
-        "Culprit": {"answer": "I was just passing by, nothing more.", "cue": "😕 (Uncertain)"},
-        "Decoy": {"answer": "I wasn't anywhere near that area.", "cue": "😎 (Calm)"},
+        "Culprit": {"answer": "I happened to be nearby; it's a coincidence.", "cue": "😕 (Ambiguous)"},
+        "Decoy": {"answer": "I wasn't anywhere near that area that night.", "cue": "😎 (Assertive)"},
     }
 }
 
@@ -183,13 +189,14 @@ df["Location_Code"] = df["Location"].map(location_map)
 weapon_map = {"Knife": 0, "Gun": 1, "None": 2}
 df["Weapon_Code"] = df["Weapon_Used"].map(weapon_map)
 
+# Cluster using both location and weapon information.
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Weapon_Code"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "Hotspot A", 1: "Hotspot B", 2: "Hotspot C"})
 
 zone_hint = df[df['Location'] == selected_case['Location']]['Cluster_Location'].values[0]
 st.write(f"📍 Crime Zone: {zone_hint}")
-st.write("📈 AI analysis indicates this area has a high probability of recurring crimes.")
+st.write("📈 AI analysis indicates a high probability of recurring crimes in this area.")
 
 # ---------- Make the Final Guess ----------
 st.subheader("🕵️‍♂️ Make Your Final Guess")
