@@ -27,7 +27,7 @@ def get_waste_item():
     item = random.choice(list(waste_items.keys()))
     return item, waste_items[item]
 
-st.title("AI-Powered Recycling Quiz")
+st.title("Statistical Waste Sorting Challenge")
 
 st.write("Sort the waste item into the correct category: Recyclable, Compostable, or Non-Recyclable.")
 
@@ -48,6 +48,9 @@ if st.button("Submit"):
         st.session_state.score += 1
     else:
         st.error(f"Incorrect. The correct category is {st.session_state.correct_category}.")
+        if st.button("New Game"):
+            st.session_state.score = 0
+            st.session_state.attempts = 0
     
     st.session_state.attempts += 1
     
@@ -66,6 +69,3 @@ if st.button("Submit"):
         st.session_state.current_item, st.session_state.correct_category = get_waste_item()
     
 st.write(f"Score: {st.session_state.score}/{st.session_state.attempts}")
-
-st.write("### How AI Helps in Waste Management")
-st.write("AI-powered waste management systems use image recognition and machine learning to sort waste more accurately, reducing landfill waste and improving recycling efficiency.")
