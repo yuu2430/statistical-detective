@@ -155,7 +155,7 @@ confidence_percent_low = int(ci_low * 100)
 confidence_percent_high = int(ci_high * 100)
 
 st.divider()
-st.header("🕵️♂️ Investigation Toolkit")
+st.header("🕵️Investigation Toolkit")
 
 # Hint system
 with st.expander("🔍 Reveal Investigation Clues", expanded=difficulty=="Easy"):
@@ -181,7 +181,7 @@ if st.button("Submit Findings", type="primary"):
     correct_gender = guessed_gender == selected_case["Suspect_Gender"]
     
     if correct_location and correct_age and correct_gender:
-        st.success("🎉 Case Solved! You've identified the suspect!")
+        st.success("🎉 Case Solved! You've identified the suspect! You win a sweet treat :)")
         st.balloons()
         st.session_state.new_game = True  # Reset the game after solving the case
     else:
