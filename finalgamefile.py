@@ -124,11 +124,14 @@ if st.button("Submit Guess", key="submit_guess"):
         if st.session_state.attempts > 0:
             st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
         else:
-            # All attempts are exhausted; reveal the correct answer
-            st.error("\U0001F480 No attempts left! The correct answer was:")
-            st.write(f"📍 Location: {selected_case['Location']}")
-            st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
-            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+            if (difficulty == "Easy" and st.session_state.attempts == 0) or \ 
+            (difficulty == "Hard" and st.session_state.attempts == 0) or \
+            (difficulty == "Expert" and st.session_state.attempts == 0):
+                st.error("\U0001F480 No attempts left! The correct answer was:")
+                st.write(f"📍 Location: {selected_case['Location']}")
+                st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
+                st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+
 
 
     # Display the correct answer
