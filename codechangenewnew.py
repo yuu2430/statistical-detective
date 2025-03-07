@@ -5,170 +5,155 @@ import numpy as np
 import random
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
-from scipy import stats  # For confidence interval calculation
+from scipy import stats
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-# Set up the page layout and style
-st.set_page_config(layout="wide", page_title="🔍 Statistical Detective", page_icon="🕵️")
-
-# Custom CSS for a game-like aesthetic
+# Custom aesthetic styling
 st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-        font-family: 'Arial', sans-serif;
+        background-color: #F5F5DC;
+        color: #4B3832;
+        font-family: 'Courier New', monospace;
     }
     .stButton>button {
-        background-color: #ff6f61;
-        color: white;
-        border-radius: 12px;
+        background-color: #6F4E37 !important;
+        color: #FFF4E6 !important;
+        border-radius: 8px;
         padding: 10px 24px;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
+        border: 2px solid #4B3832;
         transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        background-color: #ff3b2f;
+        background-color: #4B3832 !important;
         transform: scale(1.05);
     }
     .stSelectbox, .stSlider, .stRadio {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 8px;
-    }
-    .stSuccess, .stError {
-        border-radius: 8px;
-        padding: 12px;
-        margin: 10px 0;
+        background-color: #FFF4E6 !important;
+        border: 1px solid #6F4E37 !important;
+        border-radius: 5px;
     }
     .stSuccess {
-        background-color: #4caf50;
+        background-color: #D8CCA3 !important;
+        color: #4B3832 !important;
+        border: 1px solid #6F4E37;
     }
     .stError {
-        background-color: #f44336;
+        background-color: #FFE4C4 !important;
+        color: #8B0000 !important;
+        border: 1px solid #8B0000;
+    }
+    .dataframe {
+        background-color: #FFF4E6 !important;
+        border: 2px solid #6F4E37 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Game title and description
-st.title("🔍 Statistical Detective")
-st.write("Use statistics and hints! Analyze the data, interpret the probabilities, and catch the suspect!")
+st.title("🔍 The Logical Sleuth")
+st.write("*Analyze the crime database, follow the evidence, and identify the suspect!*")
 
-# Game difficulty settings
-difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
-difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
-attempts_left = difficulty_levels[difficulty]
-if "attempts" not in st.session_state or st.session_state.get("new_game", False):
-    st.session_state.attempts = attempts_left
-
-@st.cache_data  # Cache dataset to keep cases consistent
-def generate_crime_data():
-    crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
-    locations = ["Manjalpur", "Fatehgunj", "Gorwa", "Makarpura"]
-    data = []
-    start_date = datetime(2024, 1, 1)
-    end_date = datetime(2025, 2, 1)
-    for i in range(1, 11):  # Generate 20 cases
-        crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
-        crime_time_minutes = random.randint(0, 1439)
-        formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
-        data.append({
-            "Case_ID": i,
-            "Date": crime_date.strftime('%Y-%m-%d'),
-            "Time": formatted_time,
-            "Location": random.choice(locations),
-            "Crime_Type": random.choice(crime_types),
-            "Suspect_Age": random.randint(18, 50),
-            "Suspect_Gender": random.choice(["Male", "Female"]),
-            "Weapon_Used": random.choice(["Knife", "Gun", "None"]),
-            "Outcome": random.choice(["Unsolved", "Solved"]),
-            "Time_Minutes": crime_time_minutes
-        })
-    return pd.DataFrame(data)
-
-df = generate_crime_data()
-st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
-
-# Crime pattern detection
-location_map = {"Manjalpur": 0, "Fatehgunj": 1, "Gorwa": 2, "Makarpura": 3}
-df["Location_Code"] = df["Location"].map(location_map)
-df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
-
-kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location_Code"]])
-df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
-
-cluster_hints = {
-    "High-Risk Zone A": "Data shows 70% of crimes here happen at night, often involving weapons.",
-    "High-Risk Zone B": "Statistically, fraud and pickpocketing occur 60% of the time in this zone.",
-    "High-Risk Zone C": "Burglary incidents make up 55% of crimes in this area, usually in the evenings."
+# Game settings
+difficulty_levels = {
+    "Easy": {"attempts": 3, "hints": 3},
+    "Hard": {"attempts": 2, "hints": 2},
+    "Expert": {"attempts": 1, "hints": 1}
 }
 
-df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
+difficulty = st.selectbox("Choose Your Challenge Level", list(difficulty_levels.keys()))
+current_difficulty = difficulty_levels[difficulty]
 
-# Select a case for the player
-if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
-    st.session_state.selected_case = df.sample(1).iloc[0]
-    st.session_state.new_game = False
+@st.cache_data
+def generate_crime_data():
+    crimes = pd.DataFrame({
+        "Case_ID": range(1, 21),
+        "Date": [datetime(2024, 1, 1) + timedelta(days=random.randint(0, 365)) for _ in range(20)],
+        "Location": random.choices(["Old Town", "Financial District", "Industrial Zone", "Residential Area"], k=20),
+        "Crime_Type": random.choices(["Burglary", "Fraud", "Assault", "Cyber Crime"], k=20),
+        "Time": [f"{random.randint(0,23):02d}:{random.randint(0,59):02d}" for _ in range(20)],
+        "Suspect_Age": np.random.normal(35, 8, 20).astype(int),
+        "Suspect_Gender": random.choices(["Male", "Female"], weights=[0.7, 0.3], k=20)
+    })
+    return crimes
 
-selected_case = st.session_state.selected_case
+df = generate_crime_data()
 
-# Calculate the confidence interval for suspect age
-age_group = selected_case['Suspect_Age'] // 10 * 10
-age_data = df['Suspect_Age']
-age_count = age_data[(age_data // 10 * 10) == age_group].count()
-total_cases = len(age_data)
-
-# Proportion of suspects in the same age group
-proportion = age_count / total_cases
-
-# 95% confidence interval for proportion
-ci_low, ci_high = stats.norm.interval(0.95, loc=proportion, scale=np.sqrt(proportion * (1 - proportion) / total_cases))
-
-# Convert confidence interval into percentage
-confidence_percent_low = int(ci_low * 100)
-confidence_percent_high = int(ci_high * 100)
-
-st.write("\U0001F4CA Hints:")
-st.write(f"\U0001F575 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
-st.write(f"\U0001F4CD Location Analysis: {selected_case['Cluster_Hint']}")
-
-# User input for guesses
-guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
-guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
-guessed_gender = st.radio("What is the suspect's gender?", ["Male", "Female"], key="suspect_gender")
-guessed_gender = 0 if guessed_gender == "Male" else 1
-
-if st.button("Submit Guess", key="submit_guess"):
-    correct_location = guessed_location == selected_case["Location"]
-    correct_age = guessed_age == selected_case["Suspect_Age"]
-    correct_gender = guessed_gender == selected_case["Suspect_Gender"]
+# Data analysis for logical hints
+def generate_hints(selected_case, difficulty):
+    hints = []
+    location_data = df[df["Location"] == selected_case["Location"]]
     
-    if correct_location and correct_age and correct_gender:
-        st.success(f"\U0001F389 Correct! You've solved the case. Reward: You win a sweet treat! �")
+    # Age analysis
+    age_mean = location_data["Suspect_Age"].mean()
+    age_std = location_data["Suspect_Age"].std()
+    hints.append(f"📊 Historical data shows suspects in {selected_case['Location']} tend to be between {int(age_mean - age_std)}-{int(age_mean + age_std)} years old")
+    
+    # Time analysis
+    crime_times = pd.to_datetime(location_data["Time"]).dt.hour
+    common_time = stats.mode(crime_times).mode[0]
+    hints.append(f"🕒 Most crimes here occur around {common_time}:00")
+    
+    # Gender analysis
+    gender_dist = location_data["Suspect_Gender"].value_counts(normalize=True)
+    hints.append(f"👥 Suspect gender ratio: {gender_dist.get('Male', 0)*100:.1f}% Male, {gender_dist.get('Female', 0)*100:.1f}% Female")
+    
+    return hints[:current_difficulty["hints"]]
+
+if "target_case" not in st.session_state:
+    st.session_state.target_case = df.sample(1).iloc[0]
+    st.session_state.attempts = current_difficulty["attempts"]
+    st.session_state.hints_used = 0
+
+st.header("Crime Database")
+st.dataframe(df, use_container_width=True, hide_index=True)
+
+st.divider()
+st.header("Case Analysis Toolkit")
+
+with st.expander("🔍 Reveal Investigative Hints", expanded=difficulty=="Easy"):
+    hints = generate_hints(st.session_state.target_case, difficulty)
+    for hint in hints:
+        st.write(f"🔖 {hint}")
+    st.session_state.hints_used = len(hints)
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    loc_guess = st.selectbox("Crime Location", df["Location"].unique())
+with col2:
+    age_guess = st.slider("Suspect Age", 18, 65, 30)
+with col3:
+    gender_guess = st.radio("Suspect Gender", ["Male", "Female"])
+
+if st.button("Submit Forensic Report"):
+    st.session_state.attempts -= 1
+    target = st.session_state.target_case
+    correct = (loc_guess == target["Location"]) & (age_guess == target["Suspect_Age"]) & (gender_guess == target["Suspect_Gender"])
+    
+    if correct:
+        st.success("🎉 Case Solved! The evidence matches perfectly!")
+        st.balloons()
     else:
-        st.session_state.attempts -= 1
         feedback = []
-        if not correct_location:
-            feedback.append("The location probability suggests another area...")
-        if not correct_age:
-            feedback.append("The age probability doesn't align with the data...")
-        if not correct_gender:
-            feedback.append("Gender statistics indicate a different suspect...")
+        if loc_guess != target["Location"]:
+            feedback.append("📍 Location mismatch with crime patterns")
+        if abs(age_guess - target["Suspect_Age"]) > 5:
+            feedback.append("📈 Age estimate significantly off demographic profile")
+        elif age_guess != target["Suspect_Age"]:
+            feedback.append("📈 Age estimate close but not exact")
+        if gender_guess != target["Suspect_Gender"]:
+            feedback.append("👤 Gender probability mismatch")
         
         if st.session_state.attempts > 0:
-            st.error("\U0001F480 Not quite! " + " ".join(feedback))
+            st.error(f"🔍 Inconsistent Findings: {' • '.join(feedback)}")
         else:
-            st.error("\U0001F480 No attempts left! The correct answer was:")
-            st.write(f"📍 Location: {selected_case['Location']}")
-            st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
-            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+            st.error(f"❌ Case Closed Unresolved. Correct answer was: {target['Location']}, Age {target['Suspect_Age']}, {target['Suspect_Gender']}")
+            st.session_state.target_case = df.sample(1).iloc[0]
+            st.session_state.attempts = current_difficulty["attempts"]
 
-if st.button("🔄 New Game"):
-    st.session_state.new_game = True
-    st.session_state.attempts = difficulty_levels[difficulty]
-    st.cache_data.clear()  # Clear previous dataset to generate new random crime cases
+st.caption(f"🔑 Difficulty: {difficulty} • � Hints Used: {st.session_state.hints_used}/{current_difficulty['hints']}")
+
+if st.button("🔄 Start New Investigation"):
+    st.session_state.target_case = df.sample(1).iloc[0]
+    st.session_state.attempts = current_difficulty["attempts"]
     st.rerun()
