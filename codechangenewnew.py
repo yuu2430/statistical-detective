@@ -113,7 +113,7 @@ def main():
         st.sidebar.write(f"🔻 Most common location: {df['Location'].mode()[0]}")
     
     def get_common_time(df):
-    """Safely calculate and return the most common crime time"""
+        """Safely calculate and return the most common crime time"""
     try:
         # Convert time and extract hours
         crime_hours = pd.to_datetime(df['Time'], errors='coerce').dt.hour
