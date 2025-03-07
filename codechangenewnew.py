@@ -5,7 +5,6 @@ import numpy as np
 import random
 from datetime import datetime
 from sklearn.cluster import KMeans
-from scipy import stats  # For confidence interval calculation
 
 # Initialize Streamlit configuration
 st.set_page_config(
@@ -146,12 +145,27 @@ kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
-cluster_hints = {
-    "High-Risk Zone A": "Data shows 70% of crimes here happen at night, often involving weapons.",
-    "High-Risk Zone B": "Statistically, fraud and pickpocketing occur 60% of the time in this zone.",
-    "High-Risk Zone C": "Burglary incidents make up 55% of crimes in this area, usually in the evenings."
-}
+# Generate dynamic cluster hints
+def generate_cluster_hints(df):
+    cluster_hints = {}
+    for cluster in df['Cluster'].unique():
+        cluster_data = df[df['Cluster'] == cluster]
+        night_crimes = cluster_data[cluster_data['Time_Minutes'] >= 720]  # Assuming night is after 12 PM
+        weapon_crimes = cluster_data[cluster_data['Weapon_Used'] != "None"]
+        fraud_crimes = cluster_data[cluster_data['Crime_Type'] == "Fraud"]
+        burglary_crimes = cluster_data[cluster_data['Crime_Type'] == "Burglary"]
+        
+        if cluster == 0:
+            hint = f"Data shows {len(night_crimes) / len(cluster_data) * 100:.0f}% of crimes here happen at night, often involving weapons."
+        elif cluster == 1:
+            hint = f"Statistically, fraud and pickpocketing occur {len(fraud_crimes) / len(cluster_data) * 100:.0f}% of the time in this zone."
+        elif cluster == 2:
+            hint = f"Burglary incidents make up {len(burglary_crimes) / len(cluster_data) * 100:.0f}% of crimes in this area, usually in the evenings."
+        
+        cluster_hints[f"High-Risk Zone {chr(65 + cluster)}"] = hint
+    return cluster_hints
 
+cluster_hints = generate_cluster_hints(df)
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 
 # Select a case for the player
@@ -162,23 +176,12 @@ if st.session_state.selected_case is None or st.session_state.new_game:
 
 selected_case = st.session_state.selected_case
 
-# Calculate the confidence interval for suspect age using bootstrapping
-def bootstrap_confidence_interval(data, n_bootstrap=1000):
-    bootstrap_means = []
-    for _ in range(n_bootstrap):
-        sample = np.random.choice(data, size=len(data), replace=True)
-        bootstrap_means.append(np.mean(sample))
-    return np.percentile(bootstrap_means, [2.5, 97.5])
-
-age_data = df['Suspect_Age']
-ci_low, ci_high = bootstrap_confidence_interval(age_data)
-
 # Investigation toolkit
 st.divider()
 st.header("🕵️ Investigation Toolkit")
 
 # Always show investigation clues (no dropdown)
-st.write(f"🔖 Probability suggests the suspect is likely between {int(ci_low)} and {int(ci_high)} years old (95% confidence).")
+st.write(f"🔖 Age Range: The suspect is likely between {selected_case['Suspect_Age'] - 5} and {selected_case['Suspect_Age'] + 5} years old.")
 st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
 
 # Gradual hints based on attempts
