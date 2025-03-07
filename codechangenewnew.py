@@ -16,16 +16,23 @@ st.write("Use statistics and hints! Analyze the data, interpret the probabilitie
 
 # Game difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
-difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 
 # Initialize session state for attempts, selected case, and game over state
-if "attempts" not in st.session_state or st.session_state.get("new_game", False) or st.session_state.get("difficulty") != difficulty:
-    st.session_state.attempts = difficulty_levels[difficulty]
-    st.session_state.difficulty = difficulty  # Store the current difficulty level
-    st.session_state.new_game = False
-
+if "attempts" not in st.session_state:
+    st.session_state.attempts = difficulty_levels["Easy"]  # Default to Easy mode
+if "difficulty" not in st.session_state:
+    st.session_state.difficulty = "Easy"  # Default to Easy mode
 if "game_over" not in st.session_state:
     st.session_state.game_over = False
+if "new_game" not in st.session_state:
+    st.session_state.new_game = False
+
+# Update difficulty and attempts if the user changes the difficulty level
+difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
+if st.session_state.difficulty != difficulty:
+    st.session_state.difficulty = difficulty
+    st.session_state.attempts = difficulty_levels[difficulty]
+    st.session_state.new_game = True  # Reset game when difficulty changes
 
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
@@ -73,7 +80,7 @@ cluster_hints = {
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 
 # Select a case for the player
-if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
+if "selected_case" not in st.session_state or st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.new_game = False
 
@@ -137,7 +144,7 @@ if not st.session_state.game_over:
 if st.session_state.game_over:
     if st.button("🔄 New Game"):
         st.session_state.new_game = True
-        st.session_state.attempts = difficulty_levels[difficulty]
+        st.session_state.attempts = difficulty_levels[st.session_state.difficulty]
         st.session_state.game_over = False
         st.cache_data.clear()  # Clear previous dataset to generate new random crime cases
         st.rerun()
