@@ -113,20 +113,20 @@ def main():
         st.sidebar.write(f"🔻 Most common location: {df['Location'].mode()[0]}")
         
         # Common Time Calculation with Error Handling
-        common_time = "unavailable"
-        try:
-            crime_hours = pd.to_datetime(df['Time']).dt.hour
-            if not crime_hours.empty:
-                mode_result = stats.mode(crime_hours)
-                if len(mode_result.mode) > 0 and mode_result.count[0] > 1:
-                    common_time = f"{mode_result.mode[0]}:00"
-                else:
-                    common_time = "various times"
-            else:
-                common_time = "no time data"
-        except Exception as e:
-            st.warning(f"Time analysis unavailable: {str(e)}")
-            common_time = "unavailable"
+common_time = "unavailable"
+try:
+    crime_hours = pd.to_datetime(df['Time']).dt.hour
+    if not crime_hours.empty:
+        mode_result = stats.mode(crime_hours)
+        if hasattr(mode_result, 'mode') and mode_result.mode.size > 0 and mode_result.count[0] > 1:
+            common_time = f"{int(mode_result.mode[0])}:00"  # Convert to int for clean formatting
+        else:
+            common_time = "various times"
+    else:
+        common_time = "no time data"
+except Exception as e:
+    st.warning(f"Time analysis unavailable: {str(e)}")
+    common_time = "unavailable"
         
         st.sidebar.write(f"🔻 Frequent crime time: {common_time}")
     else:
