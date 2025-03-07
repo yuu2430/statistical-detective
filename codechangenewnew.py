@@ -67,7 +67,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.title("🔍 Statistical Detective")
-st.write("*Use statistics and hints! Analyze the data, interpret the probabilities, and catch the suspect!*")
+st.write("*You are given the role of a Detective! Yay! Now, you have to use Statistics and Hints! Analyze the data, interpret the probabilities, and catch the suspect!*")
 
 # Game difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
