@@ -266,7 +266,7 @@ if st.session_state.new_game:
     st.rerun()
 
 # Manual restart button (for debugging or resetting the game)
-if st.button("🔄 Restart Game (Manual Reset)"):
+if st.button("🔄 Restart Game"):
     st.session_state.new_game = True
     st.rerun()
 
