@@ -11,8 +11,8 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 st.set_page_config(layout="wide")  # Wide layout for better display
 
-st.title("\U0001F50E Statistical Detective: AI to the Rescue")
-st.write("Use statistics and AI to solve crime mysteries! Analyze the data, interpret the probabilities, and catch the suspect!")
+st.title("\U0001F50E Statistical Detective")
+st.write("Use statistics and hints! Analyze the data, interpret the probabilities, and catch the suspect!")
 
 # Game difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
@@ -91,7 +91,7 @@ ci_low, ci_high = stats.norm.interval(0.95, loc=proportion, scale=np.sqrt(propor
 confidence_percent_low = int(ci_low * 100)
 confidence_percent_high = int(ci_high * 100)
 
-st.write("\U0001F4CA AI Predictions Based on Past Data:")
+st.write("\U0001F4CA Hints:")
 st.write(f"\U0001F575 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
 st.write(f"\U0001F4CD Location Analysis: {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
 
