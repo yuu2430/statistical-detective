@@ -8,26 +8,25 @@ from sklearn.cluster import KMeans
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-st.set_page_config(layout="wide")  # Wide layout for better display
+st.set_page_config(layout="wide")
 
 st.title("\U0001F50E Statistical Detective: AI to the Rescue")
 st.write("Use statistics and AI to solve crime mysteries! Analyze the data, interpret the probabilities, and catch the suspect!")
 
-# Game difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 attempts_left = difficulty_levels[difficulty]
 if "attempts" not in st.session_state or st.session_state.get("new_game", False):
     st.session_state.attempts = attempts_left
 
-@st.cache_data  # Cache dataset to keep cases consistent
+@st.cache_data
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
     locations = ["Manjalpur", "Fatehgunj", "Gorwa", "Makarpura"]
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
-    for i in range(1, 21):  # Generate 20 cases
+    for i in range(1, 21):
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
@@ -48,7 +47,6 @@ def generate_crime_data():
 df = generate_crime_data()
 st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
 
-# Crime pattern detection
 location_map = {"Manjalpur": 0, "Fatehgunj": 1, "Gorwa": 2, "Makarpura": 3}
 df["Location_Code"] = df["Location"].map(location_map)
 df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
@@ -58,16 +56,16 @@ df['Cluster'] = kmeans.fit_predict(df[["Location_Code"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
 cluster_hints = {
-    "High-Risk Zone A": "Data shows 70% of crimes here happen at night, often involving weapons.",
-    "High-Risk Zone B": "Statistically, fraud and pickpocketing occur 60% of the time in this zone.",
-    "High-Risk Zone C": "Burglary incidents make up 55% of crimes in this area, usually in the evenings."
+    "High-Risk Zone A": "Patterns suggest that nighttime incidents here often share a common trait.",
+    "High-Risk Zone B": "A particular type of deception is frequently reported in this area.",
+    "High-Risk Zone C": "Crimes here tend to follow a repeating cycle, often targeting unattended spaces."
 }
 
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
+
 st.write("\U0001F4CA AI-Detected Crime Hotspots:")
 st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
-# Select a case for the player
 if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.new_game = False
@@ -75,8 +73,8 @@ if "selected_case" not in st.session_state or st.session_state.get("new_game", F
 selected_case = st.session_state.selected_case
 
 st.write("\U0001F4CA AI Predictions Based on Past Data:")
-st.write(f"\U0001F575 Probability suggests the suspect is likely in their {selected_case['Suspect_Age'] // 10 * 10}s (~{random.randint(60, 80)}% confidence).")
-st.write(f"⏰ Unusual activity was reported around {selected_case['Time']}.")
+st.write(f"\U0001F575 Observations indicate the suspect may belong to a particular age group—patterns lean towards their {selected_case['Suspect_Age'] // 10 * 10}s.")
+st.write(f"⏰ Reports suggest unusual activity around {selected_case['Time']}.")
 st.write(f"\U0001F4CD Location Analysis: {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
 
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
@@ -92,16 +90,16 @@ if st.button("Submit Guess", key="submit_guess"):
     correct_gender = guessed_gender == selected_case["Suspect_Gender"]
     
     if correct_location and correct_age and correct_gender:
-        st.success(f"\U0001F389 Correct! You've solved the case. Reward: \U0001F396 {difficulty} Level Badge")
+        st.success(f"\U0001F389 Correct! You've solved the case. Reward: \U0001F396 {difficulty} ypu win a sweet treat!")
     else:
         st.session_state.attempts -= 1
         feedback = []
         if not correct_location:
-            feedback.append("The location probability suggests another area...")
+            feedback.append("Something about this location doesn't quite align with past patterns...")
         if not correct_age:
-            feedback.append("The age probability doesn't align with the data...")
+            feedback.append("Age data suggests a different trend—perhaps reconsider?")
         if not correct_gender:
-            feedback.append("Gender statistics indicate a different suspect...")
+            feedback.append("Profiles in similar cases indicate another possibility.")
         
         if st.session_state.attempts > 0:
             st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
