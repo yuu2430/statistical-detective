@@ -76,8 +76,8 @@ selected_case = st.session_state.selected_case
 
 st.write("\U0001F4CA AI Predictions Based on Past Data:")
 st.write(f"\U0001F575 Probability suggests the suspect is likely in their {selected_case['Suspect_Age'] // 10 * 10}s (~{random.randint(60, 80)}% confidence).")
-st.write(f"⏰ Unusual activity was reported around {selected_case['Time']}.")
 st.write(f"\U0001F4CD Location Analysis: {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
+
 
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
