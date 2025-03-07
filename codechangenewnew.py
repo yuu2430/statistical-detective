@@ -76,11 +76,14 @@ st.markdown("""
 # Sidebar for game instructions and status
 st.sidebar.header("How to Play")
 st.sidebar.write("""
-1. Select a difficulty level.
+1. Select a difficulty level:
+   - **Easy**: 3 attempts
+   - **Hard**: 2 attempts
+   - **Expert**: 1 attempt
 2. Analyze the crime data and use the hints provided.
 3. Guess the suspect's location, age, and gender.
 4. Submit your findings and see if you're correct!
-5. You have a limited number of attempts. Use them wisely!
+5. Use the hints wisely to solve the case!
 """)
 
 # Initialize session state
@@ -200,13 +203,13 @@ df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 # Crime scene evidence based on weapon
 def generate_crime_scene_evidence(crime_type, weapon):
     if crime_type == "Assault":
-        return "A heavy iron rod, slightly bent from impact, was found near the scene. Witnesses reported seeing the suspect gripping it tightly before the attack."
+        return "The suspect was last seen holding a heavy metal rod before the attack."
     elif crime_type == "Burglary":
-        return "A rusted crowbar with fresh scratches was left near the broken door. It seems to have been used to pry open the lock in a hurry."
+        return "A crowbar was found near the broken window, suggesting forced entry."
     elif crime_type == "Kidnapping":
-        return "A crumpled cloth with the distinct, sharp odor of chloroform was discovered nearby. The suspect may have used it to subdue the victim quickly."
+        return "A discarded cloth with traces of chloroform was found at the scene."
     elif crime_type == "Theft":
-        return "A small, sharp pocket knife with a worn wooden handle was recovered. It appears to have been used to cut through bag straps or open a purse."
+        return "A small pocket knife was used to cut open the victim's bag strap."
     else:
         return "No significant evidence was found at the scene."
 
