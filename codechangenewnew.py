@@ -9,8 +9,17 @@ try:
     import plotly.express as px
     PLOTLY_AVAILABLE = True
 except ImportError:
-    st.warning("Plotly is not installed. Interactive visualizations will be disabled.")
     PLOTLY_AVAILABLE = False
+    st.warning("Plotly is not installed. Interactive visualizations will be disabled.")
+
+# Interactive visualization (if Plotly is available)
+if PLOTLY_AVAILABLE:
+    fig = px.scatter(df, x="Location_Code", y="Time_Minutes", color="Cluster_Location", title="Crime Locations and Times")
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.write("Interactive visualizations are disabled because Plotly is not installed.")
+    st.write("Here's a static table of the data:")
+    st.dataframe(df[["Location", "Time", "Crime_Type", "Suspect_Age", "Suspect_Gender"]])
 
 import pandas as pd
 import numpy as np
