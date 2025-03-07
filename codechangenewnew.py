@@ -28,7 +28,7 @@ def generate_crime_data():
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
-    for i in range(1, 11):  # Generate 20 cases
+    for i in range(1, 11):  # Generate 10 cases
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
@@ -65,8 +65,6 @@ cluster_hints = {
 }
 
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
-#st.write("\U0001F4CA AI-Detected Crime Hotspots:")
-#st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
 # Select a case for the player
 if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
@@ -93,9 +91,7 @@ confidence_percent_high = int(ci_high * 100)
 
 st.write("\U0001F4CA Hints:")
 st.write(f"\U0001F575 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
-#st.write(f"\U0001F4CD Location Analysis: {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
 st.write(f"\U0001F4CD Location Analysis: {selected_case['Cluster_Hint']}")
-
 
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
