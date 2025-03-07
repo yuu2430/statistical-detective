@@ -64,7 +64,7 @@ def visual_data_display(df):
         with cols[idx%4]:
             st.markdown(f"""
                 <div style="border:1px solid #ddd; padding:10px; margin:5px; border-radius:8px;
-                    background-color:{COLOR_MAP{row['Location']}20;">
+                    background-color:{COLOR_MAP[row['Location']]20};">
                     <h4>Case #{row['Case ID']}</h4>
                     <p>{ICON_MAP[row['Crime Type']]} {row['Crime Type']}</p>
                     <p>{ICON_MAP[row['Time Category']]} {row['Time']}</p>
