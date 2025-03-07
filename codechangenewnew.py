@@ -9,13 +9,26 @@ from scipy import stats
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-# Custom aesthetic styling
+# Enhanced color scheme with proper dropdown styling
 st.markdown("""
     <style>
     .stApp {
         background-color: #F5F5DC;
         color: #4B3832;
         font-family: 'Courier New', monospace;
+    }
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #6F4E37 !important;
+        color: #FFFFFF !important;
+        border-radius: 5px !important;
+    }
+    .stSlider div[data-testid="stThumbValue"] {
+        color: #4B3832 !important;
+    }
+    .stRadio div[role="radiogroup"] {
+        background-color: #FFF4E6 !important;
+        padding: 10px;
+        border-radius: 5px;
     }
     .stButton>button {
         background-color: #6F4E37 !important;
@@ -29,11 +42,6 @@ st.markdown("""
         background-color: #4B3832 !important;
         transform: scale(1.05);
     }
-    .stSelectbox, .stSlider, .stRadio {
-        background-color: #FFF4E6 !important;
-        border: 1px solid #6F4E37 !important;
-        border-radius: 5px;
-    }
     .stSuccess {
         background-color: #D8CCA3 !important;
         color: #4B3832 !important;
@@ -44,17 +52,13 @@ st.markdown("""
         color: #8B0000 !important;
         border: 1px solid #8B0000;
     }
-    .dataframe {
-        background-color: #FFF4E6 !important;
-        border: 2px solid #6F4E37 !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("🔍 The Logical Sleuth")
 st.write("*Analyze the crime database, follow the evidence, and identify the suspect!*")
 
-# Game settings
+# Game settings with enhanced data validation
 difficulty_levels = {
     "Easy": {"attempts": 3, "hints": 3},
     "Hard": {"attempts": 2, "hints": 2},
@@ -72,34 +76,45 @@ def generate_crime_data():
         "Location": random.choices(["Old Town", "Financial District", "Industrial Zone", "Residential Area"], k=20),
         "Crime_Type": random.choices(["Burglary", "Fraud", "Assault", "Cyber Crime"], k=20),
         "Time": [f"{random.randint(0,23):02d}:{random.randint(0,59):02d}" for _ in range(20)],
-        "Suspect_Age": np.random.normal(35, 8, 20).astype(int),
+        "Suspect_Age": np.clip(np.random.normal(35, 8, 20).astype(int), 18, 65),
         "Suspect_Gender": random.choices(["Male", "Female"], weights=[0.7, 0.3], k=20)
     })
     return crimes
 
 df = generate_crime_data()
 
-# Data analysis for logical hints
+# Enhanced hint generation with error handling
 def generate_hints(selected_case, difficulty):
     hints = []
     location_data = df[df["Location"] == selected_case["Location"]]
     
-    # Age analysis
-    age_mean = location_data["Suspect_Age"].mean()
-    age_std = location_data["Suspect_Age"].std()
-    hints.append(f"📊 Historical data shows suspects in {selected_case['Location']} tend to be between {int(age_mean - age_std)}-{int(age_mean + age_std)} years old")
-    
-    # Time analysis
-    crime_times = pd.to_datetime(location_data["Time"]).dt.hour
-    common_time = stats.mode(crime_times).mode[0]
-    hints.append(f"🕒 Most crimes here occur around {common_time}:00")
-    
-    # Gender analysis
-    gender_dist = location_data["Suspect_Gender"].value_counts(normalize=True)
-    hints.append(f"👥 Suspect gender ratio: {gender_dist.get('Male', 0)*100:.1f}% Male, {gender_dist.get('Female', 0)*100:.1f}% Female")
+    # Age analysis with fallback
+    if not location_data.empty:
+        age_mean = location_data["Suspect_Age"].mean()
+        age_std = location_data["Suspect_Age"].std()
+        age_range = f"{int(age_mean - age_std)}-{int(age_mean + age_std)}" if not location_data["Suspect_Age"].empty else "unknown"
+        hints.append(f"📊 Historical data shows suspects here tend to be between {age_range} years old")
+        
+        # Time analysis with mode validation
+        try:
+            crime_times = pd.to_datetime(location_data["Time"]).dt.hour
+            if not crime_times.empty:
+                mode_result = stats.mode(crime_times)
+                common_time = mode_result.mode[0] if mode_result.count[0] > 1 else crime_times.iloc[0]
+                hints.append(f"🕒 Most crimes here occur around {common_time}:00")
+        except IndexError:
+            pass
+        
+        # Gender distribution validation
+        gender_dist = location_data["Suspect_Gender"].value_counts(normalize=True)
+        if not gender_dist.empty:
+            male_pct = gender_dist.get("Male", 0) * 100
+            female_pct = gender_dist.get("Female", 0) * 100
+            hints.append(f"👥 Gender ratio: {male_pct:.1f}% Male, {female_pct:.1f}% Female")
     
     return hints[:current_difficulty["hints"]]
 
+# Session state initialization with validation
 if "target_case" not in st.session_state:
     st.session_state.target_case = df.sample(1).iloc[0]
     st.session_state.attempts = current_difficulty["attempts"]
@@ -151,7 +166,7 @@ if st.button("Submit Forensic Report"):
             st.session_state.target_case = df.sample(1).iloc[0]
             st.session_state.attempts = current_difficulty["attempts"]
 
-st.caption(f"🔑 Difficulty: {difficulty} • � Hints Used: {st.session_state.hints_used}/{current_difficulty['hints']}")
+st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Hints Used: {st.session_state.hints_used}/{current_difficulty['hints']}")
 
 if st.button("🔄 Start New Investigation"):
     st.session_state.target_case = df.sample(1).iloc[0]
