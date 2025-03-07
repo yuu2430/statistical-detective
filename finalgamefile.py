@@ -132,14 +132,7 @@ if st.button("Submit Guess", key="submit_guess"):
             elif difficulty == "Expert" and st.session_state.attempts == 0:
                 st.error("\U0001F480 No attempts left! The correct answer was:")
 
-    # Display the correct answer
-    st.write(f"📍 Location: {selected_case['Location']}")
-    st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
-    st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
-
-
-
-
+    
     # Display the correct answer
     st.write(f"📍 Location: {selected_case['Location']}")
     st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
