@@ -77,22 +77,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# [ALL OTHER CODE REMAINS THE SAME UNTIL THE DATA DISPLAY SECTION]
-
-# Display crime database without scrolling
-st.header("📊 Recent Crime Cases")
-st.dataframe(
-    df.style.applymap(lambda x: f"background-color: #f5f0e6; color: #4f2022"),
-    use_container_width=True,
-    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
-)
-
-# [REST OF THE CODE REMAINS EXACTLY THE SAME]
-
-# ... [Keep ALL the rest of the code EXACTLY AS IS from previous version] ...
-# ... [All game mechanics, data generation, and logic remain unchanged] ...
-# ... [Maintain EXACT SAME code from previous implementation below this line] ...
-
 st.title("🔍 Vadodara Crime Solver")
 st.write("*Analyze local crime patterns and catch the culprit!*")
 
@@ -117,7 +101,7 @@ def generate_crime_data():
         },
         "Vehicle Theft": {
             "locations": ["Makarpura", "Gorwa"],
-            "time_range": (20, 4),   # 8PM-4AM (handled as two ranges)
+            "time_range": (20, 4),   # 8PM-4AM
             "age_range": (25, 40),
             "gender_bias": {"Male": 0.9, "Female": 0.1}
         },
@@ -143,15 +127,12 @@ def generate_crime_data():
         # Generate location
         location = random.choice(pattern["locations"])
         
-        # Generate time with proper range handling
+        # Generate time
         start_hour, end_hour = pattern["time_range"]
         if start_hour <= end_hour:
             hour = random.randint(start_hour, end_hour)
         else:
-            # Handle overnight ranges (e.g., 20-4 becomes 20-23 and 0-4)
-            first_part = list(range(start_hour, 24))
-            second_part = list(range(0, end_hour + 1))
-            possible_hours = first_part + second_part
+            possible_hours = list(range(start_hour, 24)) + list(range(0, end_hour + 1))
             hour = random.choice(possible_hours)
         
         minute = random.choice(["00", "15", "30", "45"])
@@ -229,9 +210,13 @@ if "target_case" not in st.session_state:
     st.session_state.attempts = current_difficulty["attempts"]
     st.session_state.hints_used = 0
 
-# Display crime database
+# Display crime database without scrolling
 st.header("📊 Recent Crime Cases")
-st.dataframe(df, use_container_width=True, height=300)
+st.dataframe(
+    df.style.applymap(lambda x: f"background-color: #f5f0e6; color: #4f2022"),
+    use_container_width=True,
+    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
+)
 
 st.divider()
 st.header("🕵️♂️ Investigation Toolkit")
