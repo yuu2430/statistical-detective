@@ -76,14 +76,11 @@ st.markdown("""
 # Sidebar for game instructions and status
 st.sidebar.header("How to Play")
 st.sidebar.write("""
-1. Select a difficulty level:
-   - **Easy**: 3 attempts
-   - **Hard**: 2 attempts
-   - **Expert**: 1 attempt
+1. Select a difficulty level.
 2. Analyze the crime data and use the hints provided.
 3. Guess the suspect's location, age, and gender.
 4. Submit your findings and see if you're correct!
-5. Use the hints wisely to solve the case!
+5. You have a limited number of attempts. Use them wisely!
 """)
 
 # Initialize session state
@@ -112,36 +109,48 @@ Can you solve the case before time runs out?
 # Difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
-
-# Update attempts based on difficulty
-st.session_state.attempts = difficulty_levels[difficulty]
+attempts_left = difficulty_levels[difficulty]
 
 # Display score
 st.sidebar.write(f"🎯 Score: {st.session_state.score}")
 
+# Define crime types, weapons, and evidence
+crime_weapons_evidence = {
+    "Assault": {"weapon": "Metal Rod", "evidence": "The suspect was last seen holding a heavy metal rod before the attack."},
+    "Burglary": {"weapon": "Crowbar", "evidence": "A crowbar was found near the broken window, suggesting forced entry."},
+    "Kidnapping": {"weapon": "Chloroform", "evidence": "A discarded cloth with traces of chloroform was found at the scene."},
+    "Theft": {"weapon": "Pocket Knife", "evidence": "A small pocket knife was used to cut open the victim's bag strap."},
+    "Robbery": {"weapon": "Gun", "evidence": "A gun was used to threaten the victim during the robbery."},
+    "Fraud": {"weapon": "None", "evidence": "No physical weapon was used, but fraudulent documents were found."}
+}
+
+# Define time periods
+time_periods = {
+    "Morning": (6, 12),
+    "Afternoon": (12, 18),
+    "Evening": (18, 24),
+    "Night": (0, 6)
+}
+
 # Generate crime data
 @st.cache_data
 def generate_crime_data():
-    crime_types = ["Theft", "Robbery", "Assault", "Burglary", "Fraud", "Kidnapping"]
+    crime_types = list(crime_weapons_evidence.keys())
     locations = ["Manjalpur", "Fatehgunj", "Gorwa", "Makarpura"]
     data = []
     for _ in range(10):  # Generate 10 cases
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         crime_type = random.choice(crime_types)
-        # Dynamically assign weapon based on crime type
-        if crime_type == "Theft":
-            weapon = random.choice(["None", "Knife"])
-        elif crime_type == "Robbery":
-            weapon = random.choice(["Gun", "Knife"])
-        elif crime_type == "Assault":
-            weapon = random.choice(["Knife", "Blunt Object"])
-        elif crime_type == "Burglary":
-            weapon = random.choice(["None", "Crowbar"])
-        elif crime_type == "Fraud":
-            weapon = "None"
-        elif crime_type == "Kidnapping":
-            weapon = random.choice(["None", "Gun"])
+        weapon = crime_weapons_evidence[crime_type]["weapon"]
+        evidence = crime_weapons_evidence[crime_type]["evidence"]
+        
+        # Determine time period
+        for period, (start, end) in time_periods.items():
+            if start <= crime_time_minutes // 60 < end:
+                time_period = period
+                break
+        
         data.append({
             "Time": formatted_time,
             "Location": random.choice(locations),
@@ -149,6 +158,8 @@ def generate_crime_data():
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female", "Other"]),
             "Weapon_Used": weapon,
+            "Evidence": evidence,
+            "Time_Period": time_period,
             "Outcome": random.choice(["Unsolved", "Solved"]),
             "Time_Minutes": crime_time_minutes
         })
@@ -174,46 +185,27 @@ kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
-# Categorize crime times into morning, afternoon, evening, and night
-def categorize_time(time_minutes):
-    if 300 <= time_minutes < 720:  # 5 AM - 12 PM
-        return "Morning"
-    elif 720 <= time_minutes < 1080:  # 12 PM - 6 PM
-        return "Afternoon"
-    elif 1080 <= time_minutes < 1260:  # 6 PM - 9 PM
-        return "Evening"
-    else:  # 9 PM - 5 AM
-        return "Night"
-
-df['Time_Category'] = df['Time_Minutes'].apply(categorize_time)
-
 # Generate dynamic cluster hints
 def generate_cluster_hints(df):
     cluster_hints = {}
     for cluster in df['Cluster'].unique():
         cluster_data = df[df['Cluster'] == cluster]
-        time_category = cluster_data['Time_Category'].mode()[0]  # Most common time category
-        hint = f"Crimes in this area often occur during the {time_category.lower()}."
+        night_crimes = cluster_data[cluster_data['Time_Period'] == "Night"]
+        weapon_crimes = cluster_data[cluster_data['Weapon_Used'] != "None"]
+        burglary_crimes = cluster_data[cluster_data['Crime_Type'] == "Burglary"]
+        
+        if cluster == 0:
+            hint = f"Crimes in this area often occur at night ({len(night_crimes) / len(cluster_data) * 100:.0f}% of cases)."
+        elif cluster == 1:
+            hint = f"This area has a high frequency of burglaries ({len(burglary_crimes) / len(cluster_data) * 100:.0f}% of cases)."
+        elif cluster == 2:
+            hint = f"Weapons are commonly used in crimes here ({len(weapon_crimes) / len(cluster_data) * 100:.0f}% of cases)."
+        
         cluster_hints[f"High-Risk Zone {chr(65 + cluster)}"] = hint
     return cluster_hints
 
 cluster_hints = generate_cluster_hints(df)
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
-
-# Crime scene evidence based on weapon
-def generate_crime_scene_evidence(crime_type, weapon):
-    if crime_type == "Assault":
-        return "The suspect was last seen holding a heavy metal rod before the attack."
-    elif crime_type == "Burglary":
-        return "A crowbar was found near the broken window, suggesting forced entry."
-    elif crime_type == "Kidnapping":
-        return "A discarded cloth with traces of chloroform was found at the scene."
-    elif crime_type == "Theft":
-        return "A small pocket knife was used to cut open the victim's bag strap."
-    else:
-        return "No significant evidence was found at the scene."
-
-df['Crime_Scene_Evidence'] = df.apply(lambda row: generate_crime_scene_evidence(row['Crime_Type'], row['Weapon_Used']), axis=1)
 
 # Select a case for the player
 if st.session_state.selected_case is None or st.session_state.new_game:
@@ -234,7 +226,11 @@ st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
 
 # Gradual hints based on attempts
 if st.session_state.hints_revealed >= 1:
-    st.write(f"🔖 Crime Scene Evidence: {selected_case['Crime_Scene_Evidence']}")
+    st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
+if st.session_state.hints_revealed >= 2:
+    st.write(f"🔖 Weapon Used: The weapon used was {selected_case['Weapon_Used']}.")
+if st.session_state.hints_revealed >= 3:
+    st.write(f"🔖 Evidence: {selected_case['Evidence']}")
 
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
