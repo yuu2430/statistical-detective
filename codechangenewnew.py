@@ -4,96 +4,101 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime, timedelta
-from sklearn.cluster import KMeans
 from scipy import stats
+
+# Initialize Streamlit configuration first
+st.set_page_config(
+    page_title="🔍 Vadodara Crime Solver",
+    page_icon="🕵️",
+    layout="wide"
+)
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-# Enhanced color scheme with proper dropdown styling
+# Custom styling for Vadodara theme
 st.markdown("""
     <style>
     .stApp {
-        background-color: #F5F5DC;
-        color: #4B3832;
-        font-family: 'Courier New', monospace;
+        background-color: #FFF5E6;
+        color: #2F4F4F;
+        font-family: 'Helvetica Neue', sans-serif;
     }
     .stSelectbox div[data-baseweb="select"] > div {
-        background-color: #6F4E37 !important;
+        background-color: #8B4513 !important;
         color: #FFFFFF !important;
         border-radius: 5px !important;
     }
     .stSlider div[data-testid="stThumbValue"] {
-        color: #4B3832 !important;
+        color: #2F4F4F !important;
     }
     .stRadio div[role="radiogroup"] {
-        background-color: #FFF4E6 !important;
+        background-color: #FFEBCD !important;
         padding: 10px;
         border-radius: 5px;
     }
     .stButton>button {
-        background-color: #6F4E37 !important;
-        color: #FFF4E6 !important;
+        background-color: #CD853F !important;
+        color: #FFFFFF !important;
         border-radius: 8px;
         padding: 10px 24px;
-        border: 2px solid #4B3832;
+        border: 2px solid #8B4513;
         transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        background-color: #4B3832 !important;
+        background-color: #A0522D !important;
         transform: scale(1.05);
     }
     .stSuccess {
-        background-color: #D8CCA3 !important;
-        color: #4B3832 !important;
-        border: 1px solid #6F4E37;
+        background-color: #98FB98 !important;
+        color: #006400 !important;
+        border: 1px solid #228B22;
     }
     .stError {
-        background-color: #FFE4C4 !important;
+        background-color: #FFB6C1 !important;
         color: #8B0000 !important;
         border: 1px solid #8B0000;
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🔍 The Logical Sleuth")
-st.write("*Analyze the crime database, follow the evidence, and identify the suspect!*")
+st.title("🔍 Vadodara Crime Solver")
+st.write("*Analyze local crime patterns and catch the culprit!*")
 
-# Game settings with enhanced data validation
+# Game settings
 difficulty_levels = {
     "Easy": {"attempts": 3, "hints": 3},
-    "Hard": {"attempts": 2, "hints": 2},
-    "Expert": {"attempts": 1, "hints": 1}
+    "Medium": {"attempts": 2, "hints": 2},
+    "Hard": {"attempts": 1, "hints": 1}
 }
 
-difficulty = st.selectbox("Choose Your Challenge Level", list(difficulty_levels.keys()))
+difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()))
 current_difficulty = difficulty_levels[difficulty]
 
 @st.cache_data
 def generate_crime_data():
-    # Create logical patterns
     patterns = {
-        "Burglary": {
-            "locations": ["Residential Area", "Old Town"],
+        "Street Robbery": {
+            "locations": ["Manjalpur", "Fatehgunj"],
             "time_range": (20, 6),  # 8PM-6AM
-            "age_range": (25, 45),
-            "gender_bias": {"Male": 0.8, "Female": 0.2}
-        },
-        "Fraud": {
-            "locations": ["Financial District", "Old Town"],
-            "time_range": (9, 17),  # 9AM-5PM
-            "age_range": (35, 55),
-            "gender_bias": {"Male": 0.4, "Female": 0.6}
-        },
-        "Assault": {
-            "locations": ["Industrial Zone", "Old Town"],
-            "time_range": (18, 23),  # 6PM-11PM
-            "age_range": (20, 40),
+            "age_range": (20, 35),
             "gender_bias": {"Male": 0.85, "Female": 0.15}
         },
-        "Cyber Crime": {
-            "locations": ["Financial District", "Residential Area"],
-            "time_range": (12, 4),  # 12PM-4AM
-            "age_range": (18, 35),
+        "Vehicle Theft": {
+            "locations": ["Makarpura", "Gorwa"],
+            "time_range": (22, 4),  # 10PM-4AM
+            "age_range": (25, 40),
+            "gender_bias": {"Male": 0.9, "Female": 0.1}
+        },
+        "Chain Snatching": {
+            "locations": ["Fatehgunj", "Manjalpur"],
+            "time_range": (18, 23),  # 6PM-11PM
+            "age_range": (18, 30),
+            "gender_bias": {"Male": 0.95, "Female": 0.05)
+        },
+        "Cyber Fraud": {
+            "locations": ["Gorwa", "Makarpura"],
+            "time_range": (10, 16),  # 10AM-4PM
+            "age_range": (25, 45),
             "gender_bias": {"Male": 0.7, "Female": 0.3}
         }
     }
@@ -103,22 +108,22 @@ def generate_crime_data():
         crime_type = random.choice(list(patterns.keys()))
         pattern = patterns[crime_type]
         
-        # Generate logically connected data
+        # Generate location
         location = random.choice(pattern["locations"])
         
-        # Time generation based on pattern
+        # Generate time
         start_hour, end_hour = pattern["time_range"]
         hour = random.randint(start_hour, end_hour) % 24
         minute = random.choice(["00", "15", "30", "45"])
         time = f"{hour:02d}:{minute}"
         
-        # Age generation with pattern-based distribution
+        # Generate age
         age = int(np.clip(np.random.normal(
-            sum(pattern["age_range"])/2,  # Mean of range
-            (pattern["age_range"][1] - pattern["age_range"][0])/6  # Std dev
+            sum(pattern["age_range"])/2,
+            (pattern["age_range"][1] - pattern["age_range"][0])/6
         ), 18, 65))
         
-        # Gender selection with pattern bias
+        # Generate gender
         gender = random.choices(
             list(pattern["gender_bias"].keys()),
             weights=list(pattern["gender_bias"].values())
@@ -139,64 +144,66 @@ def generate_crime_data():
 
 df = generate_crime_data()
 
-# Enhanced hint generation with error handling
-def generate_hints(selected_case, difficulty):
+def generate_hints(selected_case, difficulty_level):
     hints = []
     crime_type = selected_case["Crime_Type"]
     pattern = {
-        "Burglary": {
-            "locations": ["Residential Area", "Old Town"],
-            "time": "night hours (8PM-6AM)",
+        "Street Robbery": {
+            "locations": ["Manjalpur", "Fatehgunj"],
+            "time": "late evening to early morning",
+            "age": "typically 20-35 years old",
+            "gender": "almost always male (85%)"
+        },
+        "Vehicle Theft": {
+            "locations": ["Makarpura", "Gorwa"],
+            "time": "late night hours (10PM-4AM)",
+            "age": "usually 25-40 years old",
+            "gender": "predominantly male (90%)"
+        },
+        "Chain Snatching": {
+            "locations": ["Fatehgunj", "Manjalpur"],
+            "time": "evening rush hours",
+            "age": "young adults (18-30 years)",
+            "gender": "overwhelmingly male (95%)"
+        },
+        "Cyber Fraud": {
+            "locations": ["Gorwa", "Makarpura"],
+            "time": "daytime working hours",
             "age": "25-45 years old",
-            "gender": "predominantly male (80%)"
-        },
-        "Fraud": {
-            "locations": ["Financial District", "Old Town"],
-            "time": "business hours (9AM-5PM)",
-            "age": "35-55 years old",
-            "gender": "mixed gender (40% male)"
-        },
-        "Assault": {
-            "locations": ["Industrial Zone", "Old Town"],
-            "time": "evening hours (6PM-11PM)",
-            "age": "20-40 years old",
-            "gender": "mostly male (85%)"
-        },
-        "Cyber Crime": {
-            "locations": ["Financial District", "Residential Area"],
-            "time": "late hours (12PM-4AM)",
-            "age": "18-35 years old",
-            "gender": "male-dominated (70%)"
+            "gender": "mostly male (70%)"
         }
     }.get(crime_type, {})
 
     if pattern:
         hints.extend([
-            f"🔍 This type of crime ({crime_type}) typically occurs in {', '.join(pattern['locations'])}",
-            f"🕒 Common timeframe: {pattern['time']}",
-            f"👤 Suspect profile: {pattern['age']}, {pattern['gender']}"
+            f"🔍 {crime_type} cases usually occur in {', '.join(pattern['locations'])}",
+            f"🕒 Common time: {pattern['time']}",
+            f"👤 Typical suspect: {pattern['age']}, {pattern['gender']}"
         ])
     
-    return hints[:current_difficulty["hints"]]
-    
-# Session state initialization with validation
+    return hints[:difficulty_levels[difficulty_level]["hints"]]
+
+# Session state management
 if "target_case" not in st.session_state:
     st.session_state.target_case = df.sample(1).iloc[0]
     st.session_state.attempts = current_difficulty["attempts"]
     st.session_state.hints_used = 0
 
-st.header("Crime Database")
-st.dataframe(df, use_container_width=True, hide_index=True)
+# Display crime database
+st.header("📊 Recent Crime Cases")
+st.dataframe(df, use_container_width=True, height=300)
 
 st.divider()
-st.header("Case Analysis Toolkit")
+st.header("🕵️♂️ Investigation Toolkit")
 
-with st.expander("🔍 Reveal Investigative Hints", expanded=difficulty=="Easy"):
+# Hint system
+with st.expander("🔍 Reveal Investigation Clues", expanded=difficulty=="Easy"):
     hints = generate_hints(st.session_state.target_case, difficulty)
     for hint in hints:
         st.write(f"🔖 {hint}")
     st.session_state.hints_used = len(hints)
 
+# Investigation inputs
 col1, col2, col3 = st.columns(3)
 with col1:
     loc_guess = st.selectbox("Crime Location", df["Location"].unique())
@@ -205,35 +212,39 @@ with col2:
 with col3:
     gender_guess = st.radio("Suspect Gender", ["Male", "Female"])
 
-if st.button("Submit Forensic Report"):
+# Submit investigation
+if st.button("Submit Findings", type="primary"):
     st.session_state.attempts -= 1
     target = st.session_state.target_case
     correct = (loc_guess == target["Location"]) & (age_guess == target["Suspect_Age"]) & (gender_guess == target["Suspect_Gender"])
     
     if correct:
-        st.success("🎉 Case Solved! The evidence matches perfectly!")
+        st.success("🎉 Case Solved! You've identified the suspect!")
         st.balloons()
     else:
         feedback = []
         if loc_guess != target["Location"]:
-            feedback.append("📍 Location mismatch with crime patterns")
+            feedback.append("📍 Location doesn't match crime pattern")
         if abs(age_guess - target["Suspect_Age"]) > 5:
-            feedback.append("📈 Age estimate significantly off demographic profile")
+            feedback.append("📈 Age estimate significantly off")
         elif age_guess != target["Suspect_Age"]:
             feedback.append("📈 Age estimate close but not exact")
         if gender_guess != target["Suspect_Gender"]:
             feedback.append("👤 Gender probability mismatch")
         
         if st.session_state.attempts > 0:
-            st.error(f"🔍 Inconsistent Findings: {' • '.join(feedback)}")
+            st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
         else:
-            st.error(f"❌ Case Closed Unresolved. Correct answer was: {target['Location']}, Age {target['Suspect_Age']}, {target['Suspect_Gender']}")
+            st.error(f"❌ Case Closed. Correct answer: {target['Location']}, Age {target['Suspect_Age']}, {target['Suspect_Gender']}")
             st.session_state.target_case = df.sample(1).iloc[0]
             st.session_state.attempts = current_difficulty["attempts"]
 
-st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Hints Used: {st.session_state.hints_used}/{current_difficulty['hints']}")
+# Status bar
+st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Clues Used: {st.session_state.hints_used}/{current_difficulty['hints']}")
 
-if st.button("🔄 Start New Investigation"):
+# New case button
+if st.button("🔄 Start New Case"):
     st.session_state.target_case = df.sample(1).iloc[0]
     st.session_state.attempts = current_difficulty["attempts"]
     st.rerun()
+    
