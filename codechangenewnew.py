@@ -128,9 +128,6 @@ except Exception as e:
     st.warning(f"Time analysis unavailable: {str(e)}")
     common_time = "unavailable"
         
-        st.sidebar.write(f"🔻 Frequent crime time: {common_time}")
-    else:
-        raw_data_display(df)
     
     # Game Controls
     # ... (maintain previous game logic for hints/guesses) ...
