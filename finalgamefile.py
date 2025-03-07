@@ -65,8 +65,8 @@ cluster_hints = {
 }
 
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
-st.write("\U0001F4CA AI-Detected Crime Hotspots:")
-st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
+#st.write("\U0001F4CA AI-Detected Crime Hotspots:")
+#st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
 # Select a case for the player
 if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
