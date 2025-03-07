@@ -39,6 +39,15 @@ st.markdown(
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
         color: #4CAF50;
     }
+    .stMarkdown h1 {
+        font-size: 2.5rem;
+    }
+    .stMarkdown h2 {
+        font-size: 2rem;
+    }
+    .stMarkdown h3 {
+        font-size: 1.75rem;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -157,28 +166,4 @@ with st.form("guess_form"):
         st.session_state.attempts -= 1  # Decrement attempts before checking conditions
 
         correct_location = guessed_location == selected_case["Location"]
-        correct_age = guessed_age == selected_case["Suspect_Age"]
-        correct_gender = guessed_gender == selected_case["Suspect_Gender"]
-
-        if correct_location and correct_age and correct_gender:
-            st.success("🎉 Correct! You've solved the case. Reward: You win a sweet treat! 🍬")
-            st.balloons()
-            st.session_state.game_over = True
-        else:
-            if st.session_state.attempts > 0:
-                st.error(f"❌ Not quite! Attempts left: {st.session_state.attempts}")
-            else:
-                st.session_state.game_over = True
-                st.error("💀 No attempts left! The correct answer was:")
-                st.write(f"📍 Location: {selected_case['Location']}")
-                st.write(f"👤 Age: {selected_case['Suspect_Age']}")
-                st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
-
-# New Game Button
-if st.session_state.game_over:
-    if st.button("🔄 New Game"):
-        st.session_state.new_game = True
-        st.session_state.attempts = difficulty_levels[st.session_state.difficulty]
-        st.session_state.game_over = False
-        st.cache_data.clear()
-        st.rerun()
+        correct_age = guessed_age == selected_case["Sus
