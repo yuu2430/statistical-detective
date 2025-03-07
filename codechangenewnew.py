@@ -111,21 +111,32 @@ def main():
         visual_data_display(df)
         st.sidebar.markdown("### 🕵️ Pattern Assistant")
         st.sidebar.write(f"🔻 Most common location: {df['Location'].mode()[0]}")
-    common_time = "unavailable" 
     
+    def get_common_time(df):
+    """Safely calculate and return the most common crime time"""
     try:
-        crime_hours = pd.to_datetime(df['Time']).dt.hour
-        if not crime_hours.empty:
-            mode_result = stats.mode(crime_hours)
-            if mode_result.count[0] > 1:
-                common_time = f"{mode_result.mode[0]}:00"
-            else:
-                common_time = "various times"
-        else:
-            common_time = "no time data"
-    except Exception:
-        common_time = "unavailable"
-        st.warning(f"Time analysis unavailable: {str(e)}")
+        # Convert time and extract hours
+        crime_hours = pd.to_datetime(df['Time'], errors='coerce').dt.hour
+        
+        # Validate data
+        if crime_hours.empty or crime_hours.isnull().all():
+            return "no time data"
+        
+        # Calculate mode safely
+        mode_result = stats.mode(crime_hours.dropna())
+        
+        # Validate mode result
+        if len(mode_result.mode) > 0 and mode_result.count[0] > 1:
+            return f"{int(mode_result.mode[0])}:00"
+        
+        return "various times"
+    
+    except Exception as e:
+        st.warning(f"Time analysis error: {str(e)}")
+        return "unavailable"
+
+# In your sidebar code
+common_time = get_common_time(df)
 st.sidebar.write(f"🔻 Frequent crime time: {common_time}")
     # Game Controls
     # ... (maintain previous game logic for hints/guesses) ...
