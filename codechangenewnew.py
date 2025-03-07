@@ -257,6 +257,9 @@ if st.button("Submit Findings", type="primary"):
             st.session_state.new_game = True  # Reset the game after running out of attempts
             st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
 
+    # Rerun the app to update the state
+    st.rerun()
+
 # Reset the game if new_game is True
 if st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
