@@ -3,10 +3,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from sklearn.cluster import KMeans
 from scipy import stats  # For confidence interval calculation
-import time  # For real-time timer
 
 # Initialize Streamlit configuration
 st.set_page_config(
@@ -74,22 +73,20 @@ st.sidebar.write("""
 2. Analyze the crime data and use the hints provided.
 3. Guess the suspect's location, age, and gender.
 4. Submit your findings and see if you're correct!
-5. You have a limited number of attempts and time. Use them wisely!
+5. You have a limited number of attempts. Use them wisely!
 """)
 
 # Initialize session state
 if "score" not in st.session_state:
     st.session_state.score = 0
-if "start_time" not in st.session_state:
-    st.session_state.start_time = datetime.now()
 if "attempts" not in st.session_state:
     st.session_state.attempts = 3  # Default attempts
 if "selected_case" not in st.session_state:
     st.session_state.selected_case = None
 if "new_game" not in st.session_state:
     st.session_state.new_game = True
-if "game_over" not in st.session_state:
-    st.session_state.game_over = False
+if "hints_revealed" not in st.session_state:
+    st.session_state.hints_revealed = 0  # Track how many hints have been revealed
 
 # Game title and storyline
 st.title("🔍 Statistical Detective")
@@ -105,26 +102,8 @@ difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 attempts_left = difficulty_levels[difficulty]
 
-# Timer logic
-time_limit = 240  # 4 minutes
-if "time_left" not in st.session_state:
-    st.session_state.time_left = time_limit
-
-# Update timer in real-time
-if not st.session_state.game_over:
-    time_elapsed = (datetime.now() - st.session_state.start_time).seconds
-    st.session_state.time_left = max(0, time_limit - time_elapsed)
-
-# Display score and timer
+# Display score
 st.sidebar.write(f"🎯 Score: {st.session_state.score}")
-st.sidebar.write(f"⏳ Time Left: {st.session_state.time_left} seconds")
-
-# Check if time is up
-if st.session_state.time_left <= 0:
-    st.session_state.game_over = True
-    st.error("⏰ Time's up! Case closed.")
-    st.session_state.new_game = True
-    st.rerun()
 
 # Generate crime data
 @st.cache_data
@@ -179,6 +158,7 @@ df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 if st.session_state.selected_case is None or st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.new_game = False
+    st.session_state.hints_revealed = 0  # Reset hints for new case
 
 selected_case = st.session_state.selected_case
 
@@ -201,6 +181,12 @@ st.header("🕵️ Investigation Toolkit")
 st.write(f"🔖 Probability suggests the suspect is likely between {int(ci_low)} and {int(ci_high)} years old (95% confidence).")
 st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
 
+# Gradual hints based on attempts
+if st.session_state.hints_revealed >= 1:
+    st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
+if st.session_state.hints_revealed >= 2:
+    st.write(f"🔖 Weapon Used: The weapon used was {selected_case['Weapon_Used']}.")
+
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -213,7 +199,7 @@ with col3:
 guessed_gender = 0 if guessed_gender == "Male" else 1 if guessed_gender == "Female" else 2
 
 # Submit investigation
-if st.button("Submit Findings", type="primary") and not st.session_state.game_over:
+if st.button("Submit Findings", type="primary"):
     st.session_state.attempts -= 1
     correct_location = guessed_location == selected_case["Location"]
     correct_age = guessed_age == selected_case["Suspect_Age"]
@@ -225,8 +211,19 @@ if st.button("Submit Findings", type="primary") and not st.session_state.game_ov
         st.session_state.score += 1  # Increase score
         st.session_state.new_game = True  # Reset the game after solving the case
     else:
+        feedback = []
+        if not correct_location:
+            feedback.append(f"📍 Location doesn't match. Correct location: {selected_case['Location']}")
+        if abs(guessed_age - selected_case["Suspect_Age"]) > 5:
+            feedback.append(f"📈 Age estimate significantly off. Correct age: {selected_case['Suspect_Age']}")
+        elif guessed_age != selected_case["Suspect_Age"]:
+            feedback.append(f"📈 Age estimate close but not exact. Correct age: {selected_case['Suspect_Age']}")
+        if guessed_gender != selected_case["Suspect_Gender"]:
+            feedback.append(f"👤 Gender mismatch. Correct gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
+        
         if st.session_state.attempts > 0:
-            st.error("🚨 Incorrect guess! Try again.")
+            st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
+            st.session_state.hints_revealed += 1  # Reveal more hints
         else:
             st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
             st.session_state.new_game = True  # Reset the game after running out of attempts
@@ -236,7 +233,7 @@ if st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.attempts = difficulty_levels[difficulty]
     st.session_state.new_game = False
-    st.session_state.start_time = datetime.now()  # Reset timer
+    st.session_state.hints_revealed = 0  # Reset hints for new case
     st.rerun()
 
 # Status bar
@@ -245,5 +242,4 @@ st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_s
 # New case button
 if st.button("🔄 Start New Case"):
     st.session_state.new_game = True
-    st.session_state.start_time = datetime.now()  # Reset timer
     st.rerun()
