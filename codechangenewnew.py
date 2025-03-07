@@ -17,11 +17,13 @@ st.write("Use statistics and hints! Analyze the data, interpret the probabilitie
 # Game difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
-attempts_left = difficulty_levels[difficulty]
 
-# Initialize session state for attempts and new game
-if "attempts" not in st.session_state or st.session_state.get("new_game", False):
-    st.session_state.attempts = attempts_left
+# Initialize session state for attempts, selected case, and game over state
+if "attempts" not in st.session_state or st.session_state.get("new_game", False) or st.session_state.get("difficulty") != difficulty:
+    st.session_state.attempts = difficulty_levels[difficulty]
+    st.session_state.difficulty = difficulty  # Store the current difficulty level
+    st.session_state.new_game = False
+
 if "game_over" not in st.session_state:
     st.session_state.game_over = False
 
