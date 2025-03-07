@@ -266,15 +266,23 @@ if st.session_state.show_correct_answer:
     st.write(f"📍 Location: {selected_case['Location']}")
     st.write(f"🔢 Age: {selected_case['Suspect_Age']}")
     st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
-    st.session_state.new_game = True  # Reset the game after revealing the correct answer
-    st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
-    st.session_state.show_correct_answer = False  # Reset correct answer display
+    
+    # Reset the game after showing the correct answer
+    if st.button("🔄 Start New Case"):
+        st.session_state.new_game = True
+        st.session_state.hints_revealed = 0  # Reset hints for new case
+        st.session_state.show_correct_answer = False  # Reset correct answer display
+        st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
+        st.rerun()  # Force a rerun to refresh the page
 
 # Status bar
 st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
 
-# New case button
-if st.button("🔄 Start New Case"):
-    st.session_state.new_game = True
-    st.session_state.hints_revealed = 0  # Reset hints for new case
-    st.session_state.show_correct_answer = False  # Reset correct answer display
+# New case button (only show if not showing the correct answer)
+if not st.session_state.show_correct_answer:
+    if st.button("🔄 Start New Case"):
+        st.session_state.new_game = True
+        st.session_state.hints_revealed = 0  # Reset hints for new case
+        st.session_state.show_correct_answer = False  # Reset correct answer display
+        st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
+        st.rerun()  # Force a rerun to refresh the page
