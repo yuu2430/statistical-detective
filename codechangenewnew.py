@@ -111,6 +111,8 @@ def main():
         visual_data_display(df)
         st.sidebar.markdown("### 🕵️ Pattern Assistant")
         st.sidebar.write(f"🔻 Most common location: {df['Location'].mode()[0]}")
+    common_time = "unavailable" 
+    
     try:
         crime_hours = pd.to_datetime(df['Time']).dt.hour
         if not crime_hours.empty:
@@ -123,6 +125,7 @@ def main():
             common_time = "no time data"
     except Exception:
         common_time = "unavailable"
+        st.warning(f"Time analysis unavailable: {str(e)}"
 st.sidebar.write(f"🔻 Frequent crime time: {common_time}")
     # Game Controls
     # ... (maintain previous game logic for hints/guesses) ...
