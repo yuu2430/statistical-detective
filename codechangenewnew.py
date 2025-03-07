@@ -79,14 +79,14 @@ st.sidebar.write("""
 # Initialize session state
 if "score" not in st.session_state:
     st.session_state.score = 0
-if "start_time" not in st.session_state:
-    st.session_state.start_time = datetime.now()
 if "attempts" not in st.session_state:
     st.session_state.attempts = 3  # Default attempts
 if "selected_case" not in st.session_state:
     st.session_state.selected_case = None
 if "new_game" not in st.session_state:
     st.session_state.new_game = True
+if "hints_revealed" not in st.session_state:
+    st.session_state.hints_revealed = 0  # Track how many hints have been revealed
 
 # Game title and storyline
 st.title("🔍 Statistical Detective")
@@ -102,18 +102,8 @@ difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 attempts_left = difficulty_levels[difficulty]
 
-# Timer logic
-time_limit = 120  # 2 minutes
-time_elapsed = (datetime.now() - st.session_state.start_time).seconds
-time_left = max(0, time_limit - time_elapsed)
-
+# Display score
 st.sidebar.write(f"🎯 Score: {st.session_state.score}")
-st.sidebar.write(f"⏳ Time Left: {time_left} seconds")
-
-if time_left <= 0:
-    st.error("⏰ Time's up! Case closed.")
-    st.session_state.new_game = True
-    st.rerun()
 
 # Generate crime data
 @st.cache_data
@@ -168,6 +158,7 @@ df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 if st.session_state.selected_case is None or st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.new_game = False
+    st.session_state.hints_revealed = 0  # Reset hints for new case
 
 selected_case = st.session_state.selected_case
 
@@ -186,10 +177,15 @@ ci_low, ci_high = bootstrap_confidence_interval(age_data)
 st.divider()
 st.header("🕵️ Investigation Toolkit")
 
-# Hint system
-with st.expander("🔍 Reveal Investigation Clues", expanded=difficulty=="Easy"):
-    st.write(f"🔖 Probability suggests the suspect is likely between {int(ci_low)} and {int(ci_high)} years old (95% confidence).")
-    st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
+# Always show investigation clues (no dropdown)
+st.write(f"🔖 Probability suggests the suspect is likely between {int(ci_low)} and {int(ci_high)} years old (95% confidence).")
+st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
+
+# Gradual hints based on attempts
+if st.session_state.hints_revealed >= 1:
+    st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
+if st.session_state.hints_revealed >= 2:
+    st.write(f"🔖 Weapon Used: The weapon used was {selected_case['Weapon_Used']}.")
 
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
@@ -227,6 +223,7 @@ if st.button("Submit Findings", type="primary"):
         
         if st.session_state.attempts > 0:
             st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
+            st.session_state.hints_revealed += 1  # Reveal more hints
         else:
             st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
             st.session_state.new_game = True  # Reset the game after running out of attempts
@@ -236,6 +233,7 @@ if st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.attempts = difficulty_levels[difficulty]
     st.session_state.new_game = False
+    st.session_state.hints_revealed = 0  # Reset hints for new case
     st.rerun()
 
 # Status bar
@@ -244,5 +242,4 @@ st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_s
 # New case button
 if st.button("🔄 Start New Case"):
     st.session_state.new_game = True
-    st.session_state.start_time = datetime.now()  # Reset timer
     st.rerun()
