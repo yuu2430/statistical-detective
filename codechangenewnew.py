@@ -108,7 +108,7 @@ Can you solve the case before time runs out?
 
 # Difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
-difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty"
+difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 attempts_left = difficulty_levels[difficulty]
 
 # Display score
