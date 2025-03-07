@@ -274,10 +274,5 @@ if st.session_state.new_game:
     st.session_state.hints_revealed = 0  # Reset hints for new case
     st.rerun()
 
-# Manual restart button (for debugging or resetting the game)
-if st.button("🔄 Restart Game (Manual Reset)"):
-    st.session_state.new_game = True
-    st.rerun()
-
 # Status bar
 st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
