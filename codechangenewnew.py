@@ -87,7 +87,7 @@ st.sidebar.write("""
 if "score" not in st.session_state:
     st.session_state.score = 0
 if "attempts" not in st.session_state:
-    st.session_state.attempts = 3  # Default attempts for Easy mode
+    st.session_state.attempts = 3  # Default attempts
 if "selected_case" not in st.session_state:
     st.session_state.selected_case = None
 if "new_game" not in st.session_state:
@@ -107,9 +107,9 @@ Can you solve the case before time runs out?
 """)
 
 # Difficulty settings
-difficulty_levels = {"Easy": 3, "Expert": 2}  # Only Easy and Expert modes
+difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
-st.session_state.attempts = difficulty_levels[difficulty]  # Set attempts based on difficulty
+attempts_left = difficulty_levels[difficulty]
 
 # Display score
 st.sidebar.write(f"🎯 Score: {st.session_state.score}")
