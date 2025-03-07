@@ -108,7 +108,7 @@ if st.button("Submit Guess", key="submit_guess"):
     correct_gender = guessed_gender == selected_case["Suspect_Gender"]
     
     if correct_location and correct_age and correct_gender:
-        st.success(f"\U0001F389 Correct! You've solved the case. Reward: \U0001F396 {difficulty} Level Badge")
+        st.success(f"\U0001F389 Correct! You've solved the case. Reward: You win a sweet treat! yay!")
     else:
         st.session_state.attempts -= 1
         feedback = []
