@@ -114,82 +114,66 @@ attempts_left = difficulty_levels[difficulty]
 # Display score
 st.sidebar.write(f"🎯 Score: {st.session_state.score}")
 
-# Define crime types and their associated evidence
-crime_evidence = {
-    "Assault": "A heavy metal rod was found at the scene with fingerprints.",
-    "Burglary": "Pry marks on the door match a specific crowbar pattern.",
-    "Kidnapping": "Residue of chloroform detected on a nearby cloth.",
-    "Theft": "Bag strap cut cleanly with a small sharp blade.",
-    "Robbery": "Security footage shows a handgun was used.",
-    "Fraud": "Forged documents left behind at the scene."
+# Define crime types, weapons, and crime scene evidence
+crime_weapons = {
+    "Assault": {"Weapon": "Metal Rod", "Evidence": "The suspect was last seen holding a heavy metal rod before the attack."},
+    "Burglary": {"Weapon": "Crowbar", "Evidence": "A crowbar was found near the broken window, suggesting forced entry."},
+    "Kidnapping": {"Weapon": "Chloroform", "Evidence": "A discarded cloth with traces of chloroform was found at the scene."},
+    "Theft": {"Weapon": "Pocket Knife", "Evidence": "A small pocket knife was used to cut open the victim's bag strap."},
+    "Robbery": {"Weapon": "Gun", "Evidence": "The suspect was seen fleeing with a gun in hand."},
+    "Fraud": {"Weapon": "None", "Evidence": "No physical evidence was found at the scene."}
 }
 
 # Define time periods
-def get_time_period(hour):
-    if 6 <= hour < 12:
-        return "Morning (6 AM - 12 PM)"
-    elif 12 <= hour < 18:
-        return "Afternoon (12 PM - 6 PM)"
-    elif 18 <= hour < 24:
-        return "Evening (6 PM - 12 AM)"
-    else:
-        return "Night (12 AM - 6 AM)"
-# ... (Keep all previous imports and setup code until crime data generation)
-
-# Define crime types and their associated evidence
-crime_evidence = {
-    "Assault": "A heavy metal rod was found at the scene with fingerprints.",
-    "Burglary": "Pry marks on the door match a specific crowbar pattern.",
-    "Kidnapping": "Residue of chloroform detected on a nearby cloth.",
-    "Theft": "Bag strap cut cleanly with a small sharp blade.",
-    "Robbery": "Security footage shows a handgun was used.",
-    "Fraud": "Forged documents left behind at the scene."
+time_periods = {
+    "Morning": (360, 719),  # 6 AM - 11:59 AM
+    "Afternoon": (720, 1079),  # 12 PM - 5:59 PM
+    "Evening": (1080, 1439),  # 6 PM - 11:59 PM
+    "Night": (0, 359)  # 12 AM - 5:59 AM
 }
 
-# Define time periods
-def get_time_period(hour):
-    if 6 <= hour < 12:
-        return "Morning (6 AM - 12 PM)"
-    elif 12 <= hour < 18:
-        return "Afternoon (12 PM - 6 PM)"
-    elif 18 <= hour < 24:
-        return "Evening (6 PM - 12 AM)"
-    else:
-        return "Night (12 AM - 6 AM)"
+# Function to get time period based on time in minutes
+def get_time_period(time_minutes):
+    for period, (start, end) in time_periods.items():
+        if start <= time_minutes <= end:
+            return period
+    return "Unknown"
 
-# Generate crime data (hidden time period/evidence)
+# Generate crime data
 @st.cache_data
 def generate_crime_data():
-    crime_types = list(crime_evidence.keys())
+    crime_types = list(crime_weapons.keys())
     locations = ["Manjalpur", "Fatehgunj", "Gorwa", "Makarpura"]
     data = []
-    for _ in range(10):
+    for _ in range(10):  # Generate 10 cases
         crime_time_minutes = random.randint(0, 1439)
-        hour = crime_time_minutes // 60
-        time_period = get_time_period(hour)
-        formatted_time = datetime.strptime(f"{hour}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
-        
+        formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         crime_type = random.choice(crime_types)
+        weapon = crime_weapons[crime_type]["Weapon"]
+        evidence = crime_weapons[crime_type]["Evidence"]
+        time_period = get_time_period(crime_time_minutes)
         data.append({
             "Time": formatted_time,
             "Location": random.choice(locations),
             "Crime_Type": crime_type,
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female", "Other"]),
-            # Hidden analysis columns:
-            "_Time_Period": time_period,
-            "_Evidence": crime_evidence[crime_type],
+            "Weapon_Used": weapon,
+            "Crime_Scene_Evidence": evidence,
+            "Time_Period": time_period,
+            "Outcome": random.choice(["Unsolved", "Solved"]),
             "Time_Minutes": crime_time_minutes
         })
     return pd.DataFrame(data)
 
 df = generate_crime_data()
 
-# Display crime database (without hidden columns)
+# Display crime database
 st.header("📊 Recent Crime Cases")
 st.dataframe(
-    df.drop(columns=["_Time_Period", "_Evidence", "Time_Minutes"], errors="ignore"),
-    use_container_width=True
+    df.drop(columns=["Time_Minutes", "Crime_Scene_Evidence", "Time_Period"], errors="ignore"),
+    use_container_width=True,
+    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
 )
 
 # Crime pattern detection
@@ -202,22 +186,27 @@ kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
-# Enhanced cluster hints with time patterns (without revealing location)
+# Generate dynamic cluster hints
 def generate_cluster_hints(df):
     cluster_hints = {}
     for cluster in df['Cluster'].unique():
         cluster_data = df[df['Cluster'] == cluster]
-        most_common_period = cluster_data["_Time_Period"].mode()[0]
+        night_crimes = cluster_data[cluster_data['Time_Minutes'] >= 1260]  # 9 PM - 5:59 AM
+        weapon_crimes = cluster_data[cluster_data['Weapon_Used'] != "None"]
+        burglary_crimes = cluster_data[cluster_data['Crime_Type'] == "Burglary"]
         
-        # Get time pattern statistics
-        period_counts = cluster_data["_Time_Period"].value_counts(normalize=True).to_dict()
-        period_stats = "\n".join([f"- {k}: {v*100:.1f}% of cases" for k,v in period_counts.items()])
+        if cluster == 0:
+            hint = f"Crimes in this area often occur at night ({len(night_crimes) / len(cluster_data) * 100:.0f}% of cases)."
+        elif cluster == 1:
+            hint = f"This area has a high frequency of burglaries ({len(burglary_crimes) / len(cluster_data) * 100:.0f}% of cases)."
+        elif cluster == 2:
+            hint = f"Weapons are commonly used in crimes here ({len(weapon_crimes) / len(cluster_data) * 100:.0f}% of cases)."
         
-        cluster_hints[cluster] = {
-            "time_pattern": f"Most crimes occur during {most_common_period}",
-            "period_stats": period_stats
-        }
+        cluster_hints[f"High-Risk Zone {chr(65 + cluster)}"] = hint
     return cluster_hints
+
+cluster_hints = generate_cluster_hints(df)
+df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 
 # Select a case for the player
 if st.session_state.selected_case is None or st.session_state.new_game:
@@ -228,28 +217,19 @@ if st.session_state.selected_case is None or st.session_state.new_game:
 
 selected_case = st.session_state.selected_case
 
-# Investigation Toolkit Section
+# Investigation toolkit
 st.divider()
 st.header("🕵️ Investigation Toolkit")
 
-# Always show basic clues
-st.write(f"🔖 Age Estimate: {selected_case['Suspect_Age']-5}-{selected_case['Suspect_Age']+5} years")
+# Always show investigation clues (no dropdown)
+st.write(f"🔖 Age Range: The suspect is likely between {selected_case['Suspect_Age'] - 5} and {selected_case['Suspect_Age'] + 5} years old.")
+st.write(f"🔖 Location Analysis: A crime happened in this area that occurred during the {selected_case['Time_Period']}.")
 
-# Location analysis hint (without revealing exact location)
-cluster_info = generate_cluster_hints(df)[selected_case['Cluster']]
-st.write(f"""
-**📍 Location Analysis**  
-This area shows the following patterns:  
-{cluster_info['time_pattern']}  
-Time distribution:  
-{cluster_info['period_stats']}
-""")
-
-# Gradual evidence revelation
+# Gradual hints based on attempts
 if st.session_state.hints_revealed >= 1:
-    st.write(f"🔍 Crime Scene Evidence: {selected_case['_Evidence']}")
+    st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
 if st.session_state.hints_revealed >= 2:
-    st.write(f"🕒 Exact Crime Time: {selected_case['Time']} ({selected_case['_Time_Period']})")
+    st.write(f"🔖 Crime Scene Evidence: {selected_case['Crime_Scene_Evidence']}")
 
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
