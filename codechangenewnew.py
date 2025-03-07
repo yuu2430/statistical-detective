@@ -216,6 +216,11 @@ with col3:
 
 guessed_gender = 0 if guessed_gender == "Male" else 1 if guessed_gender == "Female" else 2
 
+# Show hints based on difficulty
+hints = generate_intelligent_hints(selected_case)
+for i in range(st.session_state.hints_revealed):
+    st.write(f"🔖 Hint {i + 1}: {hints[i]}")
+
 # Submit investigation
 if st.button("Submit Findings", type="primary"):
     correct_location = guessed_location == selected_case["Location"]
@@ -251,7 +256,6 @@ if st.button("Submit Findings", type="primary"):
 
     # Rerun the app to update the state
     st.rerun()
-
 # Manual restart button (for starting a new game)
 if st.button("🔄 Restart Game (Manual Reset)"):
     st.session_state.new_game = True
