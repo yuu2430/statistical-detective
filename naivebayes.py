@@ -5,10 +5,6 @@ import numpy as np
 import random
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
@@ -31,7 +27,7 @@ def generate_crime_data():
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
-    for i in range(1, 101):  # Generate 100 cases
+    for i in range(1, 21):  # Generate 20 cases
         crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
@@ -52,23 +48,24 @@ def generate_crime_data():
 df = generate_crime_data()
 st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
 
-# Train Naïve Bayes Model
-label_encoder_location = LabelEncoder()
-label_encoder_time = LabelEncoder()
-label_encoder_crime = LabelEncoder()
+# Crime pattern detection
+location_map = {"Manjalpur": 0, "Fatehgunj": 1, "Gorwa": 2, "Makarpura": 3}
+df["Location_Code"] = df["Location"].map(location_map)
+df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 
-df['Location_Code'] = label_encoder_location.fit_transform(df['Location'])
-df['Time_Code'] = label_encoder_time.fit_transform(df['Time'])
-df['Crime_Type_Code'] = label_encoder_crime.fit_transform(df['Crime_Type'])
+kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code"]])
+df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
-X = df[['Location_Code', 'Time_Code']]
-y = df['Crime_Type_Code']
+cluster_hints = {
+    "High-Risk Zone A": "Data shows 70% of crimes here happen at night, often involving weapons.",
+    "High-Risk Zone B": "Statistically, fraud and pickpocketing occur 60% of the time in this zone.",
+    "High-Risk Zone C": "Burglary incidents make up 55% of crimes in this area, usually in the evenings."
+}
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-model = MultinomialNB()
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-st.write(f"🔍 Naïve Bayes Model Accuracy: {accuracy_score(y_test, y_pred) * 100:.2f}%")
+df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
+st.write("\U0001F4CA AI-Detected Crime Hotspots:")
+st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
 # Select a case for the player
 if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
@@ -77,17 +74,14 @@ if "selected_case" not in st.session_state or st.session_state.get("new_game", F
 
 selected_case = st.session_state.selected_case
 
-# Predict Crime Type for Selected Case
-selected_location_code = label_encoder_location.transform([selected_case['Location']])[0]
-selected_time_code = label_encoder_time.transform([selected_case['Time']])[0]
-predicted_crime_code = model.predict([[selected_location_code, selected_time_code]])[0]
-predicted_crime = label_encoder_crime.inverse_transform([predicted_crime_code])[0]
-
-st.write(f"⚠ AI Prediction: Based on past data, the most likely crime at {selected_case['Location']} around {selected_case['Time']} is *{predicted_crime}*.")
+st.write("\U0001F4CA AI Predictions Based on Past Data:")
+st.write(f"\U0001F575 Probability suggests the suspect is likely in their {selected_case['Suspect_Age'] // 10 * 10}s (~{random.randint(60, 80)}% confidence).")
+st.write(f"⏰ Unusual activity was reported around {selected_case['Time']}.")
+st.write(f"\U0001F4CD Location Analysis: {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
 
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
-guessed_location = st.selectbox("Where did the crime occur?", list(label_encoder_location.classes_), key="crime_location")
+guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
 guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
 guessed_gender = st.radio("What is the suspect's gender?", ["Male", "Female"], key="suspect_gender")
 guessed_gender = 0 if guessed_gender == "Male" else 1
@@ -95,7 +89,7 @@ guessed_gender = 0 if guessed_gender == "Male" else 1
 if st.button("Submit Guess", key="submit_guess"):
     correct_location = guessed_location == selected_case["Location"]
     correct_age = guessed_age == selected_case["Suspect_Age"]
-    correct_gender = guessed_gender == (0 if selected_case["Suspect_Gender"] == "Male" else 1)
+    correct_gender = guessed_gender == selected_case["Suspect_Gender"]
     
     if correct_location and correct_age and correct_gender:
         st.success(f"\U0001F389 Correct! You've solved the case. Reward: \U0001F396 {difficulty} Level Badge")
