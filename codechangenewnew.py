@@ -97,28 +97,45 @@ st.write(f"\U0001F4CD Location Analysis: {selected_case['Cluster_Hint']}")
 
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
-if correct_location and correct_age and correct_gender:
-    st.success("\U0001F389 Correct! You've solved the case. Reward: You win a sweet treat! yay!")
-else:
-    # Reduce attempts first
-    st.session_state.attempts = max(0, st.session_state.attempts - 1)
+if "selected_case" not in st.session_state:
+    st.error("Error: No case selected! Please restart the game.")
+    st.stop()
 
-    if st.session_state.attempts > 0:
-        feedback = []
-        if not correct_location:
-            feedback.append("The location probability suggests another area...")
-        if not correct_age:
-            feedback.append("The age probability doesn't align with the data...")
-        if not correct_gender:
-            feedback.append("Gender statistics indicate a different suspect...")
+# Extract selected case safely
+selected_case = st.session_state.selected_case
 
-        st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
+try:
+    correct_location = guessed_location == selected_case["Location"]
+    correct_age = guessed_age == selected_case["Suspect_Age"]
+    correct_gender = guessed_gender == selected_case["Suspect_Gender"]
 
-    else:  # Attempts are fully used, now reveal the answer
-        st.error("\U0001F480 No attempts left! The correct answer was:")
-        st.write(f"📍 Location: {selected_case['Location']}")
-        st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
-        st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+    if correct_location and correct_age and correct_gender:
+        st.success("\U0001F389 Correct! You've solved the case. Reward: You win a sweet treat! yay!")
+    else:
+        # Reduce attempts first
+        st.session_state.attempts = max(0, st.session_state.attempts - 1)
+
+        if st.session_state.attempts > 0:
+            feedback = []
+            if not correct_location:
+                feedback.append("The location probability suggests another area...")
+            if not correct_age:
+                feedback.append("The age probability doesn't align with the data...")
+            if not correct_gender:
+                feedback.append("Gender statistics indicate a different suspect...")
+
+            st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
+
+        else:  # Attempts are fully used, now reveal the answer
+            st.error("\U0001F480 No attempts left! The correct answer was:")
+            st.write(f"📍 Location: {selected_case['Location']}")
+            st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
+            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+
+except Exception as e:
+    st.error(f"An error occurred: {e}")
+    st.stop()
+
 
 
 # Only allow new game if attempts are over
