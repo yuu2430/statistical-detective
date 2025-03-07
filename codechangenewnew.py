@@ -12,15 +12,6 @@ except ImportError:
     PLOTLY_AVAILABLE = False
     st.warning("Plotly is not installed. Interactive visualizations will be disabled.")
 
-# Interactive visualization (if Plotly is available)
-if PLOTLY_AVAILABLE:
-    fig = px.scatter(df, x="Location_Code", y="Time_Minutes", color="Cluster_Location", title="Crime Locations and Times")
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.write("Interactive visualizations are disabled because Plotly is not installed.")
-    st.write("Here's a static table of the data:")
-    st.dataframe(df[["Location", "Time", "Crime_Type", "Suspect_Age", "Suspect_Gender"]])
-
 import pandas as pd
 import numpy as np
 import random
@@ -78,7 +69,10 @@ def generate_crime_data():
         })
     return pd.DataFrame(data)
 
+# Generate the crime data
 df = generate_crime_data()
+
+# Display the data
 st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
 
 # Crime pattern detection
@@ -118,6 +112,8 @@ if PLOTLY_AVAILABLE:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.write("Interactive visualizations are disabled because Plotly is not installed.")
+    st.write("Here's a static table of the data:")
+    st.dataframe(df[["Location", "Time", "Crime_Type", "Suspect_Age", "Suspect_Gender"]])
 
 if not st.session_state.game_over:
     guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
