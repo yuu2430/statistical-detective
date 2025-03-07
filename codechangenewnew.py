@@ -15,7 +15,7 @@ st.set_page_config(
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-# Updated Nature-inspired Color Theme
+# Updated Nature-inspired Color Theme with lighter table
 st.markdown("""
     <style>
     .stApp {
@@ -32,7 +32,7 @@ st.markdown("""
         color: #4f2022 !important;
     }
     .stSlider div[data-baseweb="slider"] {
-        background-color: #acdb0130;
+        background-color: transparent;
     }
     .stRadio div[role="radiogroup"] {
         background-color: #ffffff !important;
@@ -63,19 +63,31 @@ st.markdown("""
         border: 1px solid #4f2022;
     }
     .dataframe {
-        background-color: #ffffff !important;
+        background-color: #f5f0e6 !important;
         border: 2px solid #9a816b !important;
     }
     .dataframe th {
-        background-color: #acdb01 !important;
+        background-color: #e0d5c4 !important;
         color: #4f2022 !important;
     }
     .dataframe td {
-        background-color: #ffffff !important;
+        background-color: #f5f0e6 !important;
         color: #4f2022 !important;
     }
     </style>
     """, unsafe_allow_html=True)
+
+# [ALL OTHER CODE REMAINS THE SAME UNTIL THE DATA DISPLAY SECTION]
+
+# Display crime database without scrolling
+st.header("📊 Recent Crime Cases")
+st.dataframe(
+    df.style.applymap(lambda x: f"background-color: #f5f0e6; color: #4f2022"),
+    use_container_width=True,
+    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
+)
+
+# [REST OF THE CODE REMAINS EXACTLY THE SAME]
 
 # ... [Keep ALL the rest of the code EXACTLY AS IS from previous version] ...
 # ... [All game mechanics, data generation, and logic remain unchanged] ...
