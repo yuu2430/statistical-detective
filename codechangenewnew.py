@@ -68,7 +68,7 @@ st.markdown("""
 def generate_realistic_crimes():
     locations = {
         "Manjalpur": {
-            "time_range": (20, 4),  # 8 PM to 4 AM
+            "time_range": (20, 4),  # 8 PM to 4 AM (next day)
             "common_crimes": ["Robbery", "Assault"],
             "common_weapons": ["Knife", "Gun"],
             "age_range": (18, 30)
@@ -94,7 +94,10 @@ def generate_realistic_crimes():
         
         # Generate time within location's common hours
         start_hour, end_hour = pattern["time_range"]
-        hour = random.randint(start_hour, end_hour) % 24
+        if start_hour > end_hour:  # Handle overnight time ranges (e.g., 20-4)
+            hour = random.choice(list(range(start_hour, 24)) + list(range(0, end_hour + 1)))
+        else:
+            hour = random.randint(start_hour, end_hour)
         minute = random.randint(0, 59)
         
         # Fix weapon selection logic
