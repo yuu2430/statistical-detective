@@ -73,8 +73,14 @@ st.write("*Use statistics and hints! Analyze the data, interpret the probabiliti
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 attempts_left = difficulty_levels[difficulty]
-if "attempts" not in st.session_state or st.session_state.get("new_game", False):
+
+# Initialize session state
+if "attempts" not in st.session_state:
     st.session_state.attempts = attempts_left
+if "selected_case" not in st.session_state:
+    st.session_state.selected_case = None
+if "new_game" not in st.session_state:
+    st.session_state.new_game = True
 
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
@@ -83,13 +89,10 @@ def generate_crime_data():
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
-    for i in range(1, 11):  # Generate 20 cases
-        crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
+    for i in range(1, 11):  # Generate 10 cases
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         data.append({
-            "Case_ID": i,
-            "Date": crime_date.strftime('%Y-%m-%d'),
             "Time": formatted_time,
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
@@ -129,7 +132,7 @@ cluster_hints = {
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 
 # Select a case for the player
-if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
+if st.session_state.selected_case is None or st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.new_game = False
 
@@ -180,6 +183,7 @@ if st.button("Submit Findings", type="primary"):
     if correct_location and correct_age and correct_gender:
         st.success("🎉 Case Solved! You've identified the suspect!")
         st.balloons()
+        st.session_state.new_game = True  # Reset the game after solving the case
     else:
         feedback = []
         if not correct_location:
@@ -195,14 +199,19 @@ if st.button("Submit Findings", type="primary"):
             st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
         else:
             st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
-            st.session_state.selected_case = df.sample(1).iloc[0]
-            st.session_state.attempts = difficulty_levels[difficulty]
+            st.session_state.new_game = True  # Reset the game after running out of attempts
+
+# Reset the game if new_game is True
+if st.session_state.new_game:
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.attempts = difficulty_levels[difficulty]
+    st.session_state.new_game = False
+    st.rerun()
 
 # Status bar
 st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
 
 # New case button
 if st.button("🔄 Start New Case"):
-    st.session_state.selected_case = df.sample(1).iloc[0]
-    st.session_state.attempts = difficulty_levels[difficulty]
+    st.session_state.new_game = True
     st.rerun()
