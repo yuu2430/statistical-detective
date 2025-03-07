@@ -125,7 +125,7 @@ def main():
             common_time = "no time data"
     except Exception:
         common_time = "unavailable"
-        st.warning(f"Time analysis unavailable: {str(e)}"
+        st.warning(f"Time analysis unavailable: {str(e)}")
 st.sidebar.write(f"🔻 Frequent crime time: {common_time}")
     # Game Controls
     # ... (maintain previous game logic for hints/guesses) ...
