@@ -108,71 +108,66 @@ Can you solve the case before time runs out?
 
 # Difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
-difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
+difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty"
 attempts_left = difficulty_levels[difficulty]
 
 # Display score
 st.sidebar.write(f"🎯 Score: {st.session_state.score}")
 
-# Define crime types, weapons, and evidence
-crime_weapons_evidence = {
-    "Assault": {"weapon": "Metal Rod", "evidence": "The suspect was last seen holding a heavy metal rod before the attack."},
-    "Burglary": {"weapon": "Crowbar", "evidence": "A crowbar was found near the broken window, suggesting forced entry."},
-    "Kidnapping": {"weapon": "Chloroform", "evidence": "A discarded cloth with traces of chloroform was found at the scene."},
-    "Theft": {"weapon": "Pocket Knife", "evidence": "A small pocket knife was used to cut open the victim's bag strap."},
-    "Robbery": {"weapon": "Gun", "evidence": "A gun was used to threaten the victim during the robbery."},
-    "Fraud": {"weapon": "None", "evidence": "No physical weapon was used, but fraudulent documents were found."}
+# Define crime types and their associated evidence
+crime_evidence = {
+    "Assault": "A heavy metal rod was found at the scene with fingerprints.",
+    "Burglary": "Pry marks on the door match a specific crowbar pattern.",
+    "Kidnapping": "Residue of chloroform detected on a nearby cloth.",
+    "Theft": "Bag strap cut cleanly with a small sharp blade.",
+    "Robbery": "Security footage shows a handgun was used.",
+    "Fraud": "Forged documents left behind at the scene."
 }
 
 # Define time periods
-time_periods = {
-    "Morning": (6, 12),
-    "Afternoon": (12, 18),
-    "Evening": (18, 24),
-    "Night": (0, 6)
-}
+def get_time_period(hour):
+    if 6 <= hour < 12:
+        return "Morning (6 AM - 12 PM)"
+    elif 12 <= hour < 18:
+        return "Afternoon (12 PM - 6 PM)"
+    elif 18 <= hour < 24:
+        return "Evening (6 PM - 12 AM)"
+    else:
+        return "Night (12 AM - 6 AM)"
 
-# Generate crime data
+# Generate crime data (hidden time period/evidence)
 @st.cache_data
 def generate_crime_data():
-    crime_types = list(crime_weapons_evidence.keys())
+    crime_types = list(crime_evidence.keys())
     locations = ["Manjalpur", "Fatehgunj", "Gorwa", "Makarpura"]
     data = []
-    for _ in range(10):  # Generate 10 cases
+    for _ in range(10):
         crime_time_minutes = random.randint(0, 1439)
-        formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
+        hour = crime_time_minutes // 60
+        time_period = get_time_period(hour)
+        formatted_time = datetime.strptime(f"{hour}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
+        
         crime_type = random.choice(crime_types)
-        weapon = crime_weapons_evidence[crime_type]["weapon"]
-        evidence = crime_weapons_evidence[crime_type]["evidence"]
-        
-        # Determine time period
-        for period, (start, end) in time_periods.items():
-            if start <= crime_time_minutes // 60 < end:
-                time_period = period
-                break
-        
         data.append({
             "Time": formatted_time,
             "Location": random.choice(locations),
             "Crime_Type": crime_type,
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female", "Other"]),
-            "Weapon_Used": weapon,
-            "Evidence": evidence,
-            "Time_Period": time_period,
-            "Outcome": random.choice(["Unsolved", "Solved"]),
+            # Hidden analysis columns:
+            "_Time_Period": time_period,
+            "_Evidence": crime_evidence[crime_type],
             "Time_Minutes": crime_time_minutes
         })
     return pd.DataFrame(data)
 
 df = generate_crime_data()
 
-# Display crime database
+# Display crime database (without hidden columns)
 st.header("📊 Recent Crime Cases")
 st.dataframe(
-    df.drop(columns=["Time_Minutes"], errors="ignore"),
-    use_container_width=True,
-    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
+    df.drop(columns=["_Time_Period", "_Evidence", "Time_Minutes"], errors="ignore"),
+    use_container_width=True
 )
 
 # Crime pattern detection
@@ -185,27 +180,24 @@ kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
-# Generate dynamic cluster hints
+# Enhanced cluster hints with time patterns
 def generate_cluster_hints(df):
     cluster_hints = {}
     for cluster in df['Cluster'].unique():
         cluster_data = df[df['Cluster'] == cluster]
-        night_crimes = cluster_data[cluster_data['Time_Period'] == "Night"]
-        weapon_crimes = cluster_data[cluster_data['Weapon_Used'] != "None"]
-        burglary_crimes = cluster_data[cluster_data['Crime_Type'] == "Burglary"]
+        most_common_period = cluster_data["_Time_Period"].mode()[0]
+        location = cluster_data["Location"].mode()[0]
         
-        if cluster == 0:
-            hint = f"Crimes in this area often occur at night ({len(night_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        elif cluster == 1:
-            hint = f"This area has a high frequency of burglaries ({len(burglary_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        elif cluster == 2:
-            hint = f"Weapons are commonly used in crimes here ({len(weapon_crimes) / len(cluster_data) * 100:.0f}% of cases)."
+        # Get time pattern statistics
+        period_counts = cluster_data["_Time_Period"].value_counts(normalize=True).to_dict()
+        period_stats = "\n".join([f"- {k}: {v*100:.1f}% of cases" for k,v in period_counts.items()])
         
-        cluster_hints[f"High-Risk Zone {chr(65 + cluster)}"] = hint
+        cluster_hints[cluster] = {
+            "location": location,
+            "time_pattern": f"Most crimes occur during {most_common_period}",
+            "period_stats": period_stats
+        }
     return cluster_hints
-
-cluster_hints = generate_cluster_hints(df)
-df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 
 # Select a case for the player
 if st.session_state.selected_case is None or st.session_state.new_game:
@@ -216,21 +208,28 @@ if st.session_state.selected_case is None or st.session_state.new_game:
 
 selected_case = st.session_state.selected_case
 
-# Investigation toolkit
+# Investigation Toolkit Section
 st.divider()
 st.header("🕵️ Investigation Toolkit")
 
-# Always show investigation clues (no dropdown)
-st.write(f"🔖 Age Range: The suspect is likely between {selected_case['Suspect_Age'] - 5} and {selected_case['Suspect_Age'] + 5} years old.")
-st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
+# Always show basic clues
+st.write(f"🔖 Age Estimate: {selected_case['Suspect_Age']-5}-{selected_case['Suspect_Age']+5} years")
 
-# Gradual hints based on attempts
+# Location analysis hint combining cluster and time patterns
+cluster_info = generate_cluster_hints(df)[selected_case['Cluster']]
+st.write(f"""
+**📍 Location Analysis**  
+This area ({cluster_info['location']}) shows:  
+{cluster_info['time_pattern']}  
+Time distribution:  
+{cluster_info['period_stats']}
+""")
+
+# Gradual evidence revelation
 if st.session_state.hints_revealed >= 1:
-    st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
+    st.write(f"🔍 Crime Scene Evidence: {selected_case['_Evidence']}")
 if st.session_state.hints_revealed >= 2:
-    st.write(f"🔖 Weapon Used: The weapon used was {selected_case['Weapon_Used']}.")
-if st.session_state.hints_revealed >= 3:
-    st.write(f"🔖 Evidence: {selected_case['Evidence']}")
+    st.write(f"🕒 Exact Crime Time: {selected_case['Time']} ({selected_case['_Time_Period']})")
 
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
