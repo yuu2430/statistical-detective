@@ -65,17 +65,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# [ALL GAME CODE REMAINS THE SAME UNTIL THE DATA DISPLAY SECTION]
 
-# Display crime database without scrolling (original table styling)
-st.header("📊 Recent Crime Cases")
-st.dataframe(
-    df,
-    use_container_width=True,
-    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
-)
-
-# [REST OF THE CODE REMAINS EXACTLY THE SAME]
 
 st.title("🔍 Vadodara Crime Solver")
 st.write("*Analyze local crime patterns and catch the culprit!*")
@@ -210,14 +200,17 @@ if "target_case" not in st.session_state:
     st.session_state.attempts = current_difficulty["attempts"]
     st.session_state.hints_used = 0
 
-# Display crime database without scrolling
+# [ALL GAME CODE REMAINS THE SAME UNTIL THE DATA DISPLAY SECTION]
+
+# Display crime database without scrolling (original table styling)
 st.header("📊 Recent Crime Cases")
 st.dataframe(
-    df.style.applymap(lambda x: f"background-color: #f5f0e6; color: #4f2022"),
+    df,
     use_container_width=True,
     height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
 )
 
+# [REST OF THE CODE REMAINS EXACTLY THE SAME]
 st.divider()
 st.header("🕵️♂️ Investigation Toolkit")
 
