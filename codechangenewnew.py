@@ -197,6 +197,21 @@ def generate_cluster_hints(df):
 cluster_hints = generate_cluster_hints(df)
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
 
+# Crime scene evidence based on weapon
+def generate_crime_scene_evidence(crime_type, weapon):
+    if crime_type == "Assault":
+        return "A heavy iron rod, slightly bent from impact, was found near the scene. Witnesses reported seeing the suspect gripping it tightly before the attack."
+    elif crime_type == "Burglary":
+        return "A rusted crowbar with fresh scratches was left near the broken door. It seems to have been used to pry open the lock in a hurry."
+    elif crime_type == "Kidnapping":
+        return "A crumpled cloth with the distinct, sharp odor of chloroform was discovered nearby. The suspect may have used it to subdue the victim quickly."
+    elif crime_type == "Theft":
+        return "A small, sharp pocket knife with a worn wooden handle was recovered. It appears to have been used to cut through bag straps or open a purse."
+    else:
+        return "No significant evidence was found at the scene."
+
+df['Crime_Scene_Evidence'] = df.apply(lambda row: generate_crime_scene_evidence(row['Crime_Type'], row['Weapon_Used']), axis=1)
+
 # Select a case for the player
 if st.session_state.selected_case is None or st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
@@ -219,6 +234,8 @@ if st.session_state.hints_revealed >= 1:
     st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
 if st.session_state.hints_revealed >= 2:
     st.write(f"🔖 Weapon Used: The weapon used was {selected_case['Weapon_Used']}.")
+if st.session_state.hints_revealed >= 3:
+    st.write(f"🔖 Crime Scene Evidence: {selected_case['Crime_Scene_Evidence']}")
 
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
@@ -266,23 +283,15 @@ if st.session_state.show_correct_answer:
     st.write(f"📍 Location: {selected_case['Location']}")
     st.write(f"🔢 Age: {selected_case['Suspect_Age']}")
     st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
-    
-    # Reset the game after showing the correct answer
-    if st.button("🔄 Start New Case"):
-        st.session_state.new_game = True
-        st.session_state.hints_revealed = 0  # Reset hints for new case
-        st.session_state.show_correct_answer = False  # Reset correct answer display
-        st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
-        st.rerun()  # Force a rerun to refresh the page
+    st.session_state.new_game = True  # Reset the game after revealing the correct answer
+    st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
+    st.session_state.show_correct_answer = False  # Reset correct answer display
 
 # Status bar
 st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
 
-# New case button (only show if not showing the correct answer)
-if not st.session_state.show_correct_answer:
-    if st.button("🔄 Start New Case"):
-        st.session_state.new_game = True
-        st.session_state.hints_revealed = 0  # Reset hints for new case
-        st.session_state.show_correct_answer = False  # Reset correct answer display
-        st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
-        st.rerun()  # Force a rerun to refresh the page
+# New case button
+if st.button("🔄 Start New Case"):
+    st.session_state.new_game = True
+    st.session_state.hints_revealed = 0  # Reset hints for new case
+    st.session_state.show_correct_answer = False  # Reset correct answer display
