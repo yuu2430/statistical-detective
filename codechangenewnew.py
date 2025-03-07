@@ -107,7 +107,7 @@ Can you solve the case before time runs out?
 """)
 
 # Difficulty settings
-difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
+difficulty_levels = {"Easy": 4, "Hard": 3, "Expert": 2}  # Number of hints based on difficulty
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 
 # Update attempts dynamically based on difficulty
@@ -173,27 +173,20 @@ kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
-# Generate dynamic cluster hints
-def generate_cluster_hints(df):
-    cluster_hints = {}
-    for cluster in df['Cluster'].unique():
-        cluster_data = df[df['Cluster'] == cluster]
-        night_crimes = cluster_data[cluster_data['Time_Minutes'] >= 1260]  # 9 PM - 5:59 AM
-        weapon_crimes = cluster_data[cluster_data['Weapon_Used'] != "None"]
-        burglary_crimes = cluster_data[cluster_data['Crime_Type'] == "Burglary"]
-        
-        if cluster == 0:
-            hint = f"Crimes in this area often occur at night ({len(night_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        elif cluster == 1:
-            hint = f"This area has a high frequency of burglaries ({len(burglary_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        elif cluster == 2:
-            hint = f"Weapons are commonly used in crimes here ({len(weapon_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        
-        cluster_hints[f"High-Risk Zone {chr(65 + cluster)}"] = hint
-    return cluster_hints
-
-cluster_hints = generate_cluster_hints(df)
-df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
+# Generate intelligent hints
+def generate_intelligent_hints(selected_case):
+    hints = []
+    # Hint 1: Time range of the crime
+    crime_time = selected_case["Time_Minutes"]
+    time_range = f"The crime occurred between {(crime_time // 60) % 12}:00 {(crime_time // 60) // 12 and 'PM' or 'AM'} and {((crime_time + 120) // 60) % 12}:00 {((crime_time + 120) // 60) // 12 and 'PM' or 'AM'}."
+    hints.append(time_range)
+    # Hint 2: Crime type
+    hints.append(f"The crime type is {selected_case['Crime_Type']}.")
+    # Hint 3: Weapon used
+    hints.append(f"The weapon used was {selected_case['Weapon_Used']}.")
+    # Hint 4: Age range
+    hints.append(f"The suspect is likely between {selected_case['Suspect_Age'] - 5} and {selected_case['Suspect_Age'] + 5} years old.")
+    return hints
 
 # Select a case for the player
 if st.session_state.selected_case is None or st.session_state.new_game:
@@ -207,15 +200,10 @@ selected_case = st.session_state.selected_case
 st.divider()
 st.header("🕵️ Investigation Toolkit")
 
-# Always show investigation clues (no dropdown)
-st.write(f"🔖 Age Range: The suspect is likely between {selected_case['Suspect_Age'] - 5} and {selected_case['Suspect_Age'] + 5} years old.")
-st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
-
-# Gradual hints based on attempts
-if st.session_state.hints_revealed >= 1:
-    st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
-if st.session_state.hints_revealed >= 2:
-    st.write(f"🔖 Weapon Used: The weapon used was {selected_case['Weapon_Used']}.")
+# Show hints based on difficulty
+hints = generate_intelligent_hints(selected_case)
+for i in range(st.session_state.hints_revealed):
+    st.write(f"🔖 Hint {i + 1}: {hints[i]}")
 
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
@@ -260,7 +248,6 @@ if st.button("Submit Findings", type="primary"):
             st.write(f"📍 Location: {selected_case['Location']}")
             st.write(f"🔢 Age: {selected_case['Suspect_Age']}")
             st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
-            # Do not reset the game automatically; wait for manual restart
 
     # Rerun the app to update the state
     st.rerun()
