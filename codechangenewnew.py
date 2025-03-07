@@ -1,4 +1,4 @@
-import os 
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -18,8 +18,12 @@ st.write("Use statistics and hints! Analyze the data, interpret the probabilitie
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
 attempts_left = difficulty_levels[difficulty]
+
+# Initialize session state for attempts and new game
 if "attempts" not in st.session_state or st.session_state.get("new_game", False):
     st.session_state.attempts = attempts_left
+if "game_over" not in st.session_state:
+    st.session_state.game_over = False
 
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
@@ -65,8 +69,6 @@ cluster_hints = {
 }
 
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
-#st.write("\U0001F4CA AI-Detected Crime Hotspots:")
-#st.dataframe(df[['Case_ID', 'Location', 'Time', 'Cluster_Location', 'Cluster_Hint']], use_container_width=True)
 
 # Select a case for the player
 if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
@@ -93,54 +95,47 @@ confidence_percent_high = int(ci_high * 100)
 
 st.write("\U0001F4CA Hints:")
 st.write(f"\U0001F575 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
-#st.write(f"\U0001F4CD Location Analysis: {df[df['Location'] == selected_case['Location']]['Cluster_Hint'].values[0]}")
 st.write(f"\U0001F4CD Location Analysis: {selected_case['Cluster_Hint']}")
-
 
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
 
-guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
-guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
-guessed_gender = st.radio("What is the suspect's gender?", ["Male", "Female"], key="suspect_gender")
-guessed_gender = 0 if guessed_gender == "Male" else 1
+if not st.session_state.game_over:
+    guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
+    guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
+    guessed_gender = st.radio("What is the suspect's gender?", ["Male", "Female"], key="suspect_gender")
+    guessed_gender = 0 if guessed_gender == "Male" else 1
 
-if st.button("Submit Guess", key="submit_guess"):
-    correct_location = guessed_location == selected_case["Location"]
-    correct_age = guessed_age == selected_case["Suspect_Age"]
-    correct_gender = guessed_gender == selected_case["Suspect_Gender"]
-    
-    if correct_location and correct_age and correct_gender:
-        st.success(f"\U0001F389 Correct! You've solved the case. Reward: You win a sweet treat! yay!")
-    else:
-        st.session_state.attempts -= 1
-        feedback = []
-        if not correct_location:
-            feedback.append("The location probability suggests another area...")
-        if not correct_age:
-            feedback.append("The age probability doesn't align with the data...")
-        if not correct_gender:
-            feedback.append("Gender statistics indicate a different suspect...")
+    if st.button("Submit Guess", key="submit_guess"):
+        correct_location = guessed_location == selected_case["Location"]
+        correct_age = guessed_age == selected_case["Suspect_Age"]
+        correct_gender = guessed_gender == selected_case["Suspect_Gender"]
         
-        if st.session_state.attempts > 0:
-            st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
+        if correct_location and correct_age and correct_gender:
+            st.success(f"\U0001F389 Correct! You've solved the case. Reward: You win a sweet treat! yay!")
+            st.session_state.game_over = True
         else:
-            #Check difficulty level and reveal the answer when attempts are exhausted
-            if difficulty == "Easy" and st.session_state.attempts == 0:
+            st.session_state.attempts -= 1
+            feedback = []
+            if not correct_location:
+                feedback.append("The location probability suggests another area...")
+            if not correct_age:
+                feedback.append("The age probability doesn't align with the data...")
+            if not correct_gender:
+                feedback.append("Gender statistics indicate a different suspect...")
+            
+            if st.session_state.attempts > 0:
+                st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
+            else:
+                st.session_state.game_over = True
                 st.error("\U0001F480 No attempts left! The correct answer was:")
-            elif difficulty == "Hard" and st.session_state.attempts == 0:
-                st.error("\U0001F480 No attempts left! The correct answer was:")
-            elif difficulty == "Expert" and st.session_state.attempts == 0:
-                st.error("\U0001F480 No attempts left! The correct answer was:")
+                st.write(f"📍 Location: {selected_case['Location']}")
+                st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
+                st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
 
-    
-    # Display the correct answer
-    st.write(f"📍 Location: {selected_case['Location']}")
-    st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
-    st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
-
-
-if st.button("🔄 New Game"):
-    st.session_state.new_game = True
-    st.session_state.attempts = difficulty_levels[difficulty]
-    st.cache_data.clear()  # Clear previous dataset to generate new random crime cases
-    st.rerun()
+if st.session_state.game_over:
+    if st.button("🔄 New Game"):
+        st.session_state.new_game = True
+        st.session_state.attempts = difficulty_levels[difficulty]
+        st.session_state.game_over = False
+        st.cache_data.clear()  # Clear previous dataset to generate new random crime cases
+        st.rerun()
