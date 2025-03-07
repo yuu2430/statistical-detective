@@ -109,7 +109,9 @@ Can you solve the case before time runs out?
 # Difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
-attempts_left = difficulty_levels[difficulty]
+
+# Update attempts based on difficulty
+st.session_state.attempts = difficulty_levels[difficulty]
 
 # Display score
 st.sidebar.write(f"🎯 Score: {st.session_state.score}")
@@ -169,22 +171,26 @@ kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
+# Categorize crime times into morning, afternoon, evening, and night
+def categorize_time(time_minutes):
+    if 300 <= time_minutes < 720:  # 5 AM - 12 PM
+        return "Morning"
+    elif 720 <= time_minutes < 1080:  # 12 PM - 6 PM
+        return "Afternoon"
+    elif 1080 <= time_minutes < 1260:  # 6 PM - 9 PM
+        return "Evening"
+    else:  # 9 PM - 5 AM
+        return "Night"
+
+df['Time_Category'] = df['Time_Minutes'].apply(categorize_time)
+
 # Generate dynamic cluster hints
 def generate_cluster_hints(df):
     cluster_hints = {}
     for cluster in df['Cluster'].unique():
         cluster_data = df[df['Cluster'] == cluster]
-        night_crimes = cluster_data[cluster_data['Time_Minutes'] >= 1260]  # 9 PM - 5:59 AM
-        weapon_crimes = cluster_data[cluster_data['Weapon_Used'] != "None"]
-        burglary_crimes = cluster_data[cluster_data['Crime_Type'] == "Burglary"]
-        
-        if cluster == 0:
-            hint = f"Crimes in this area often occur at night ({len(night_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        elif cluster == 1:
-            hint = f"This area has a high frequency of burglaries ({len(burglary_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        elif cluster == 2:
-            hint = f"Weapons are commonly used in crimes here ({len(weapon_crimes) / len(cluster_data) * 100:.0f}% of cases)."
-        
+        time_category = cluster_data['Time_Category'].mode()[0]  # Most common time category
+        hint = f"Crimes in this area often occur during the {time_category.lower()}."
         cluster_hints[f"High-Risk Zone {chr(65 + cluster)}"] = hint
     return cluster_hints
 
