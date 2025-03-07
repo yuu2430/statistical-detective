@@ -134,6 +134,28 @@ def get_time_period(hour):
         return "Evening (6 PM - 12 AM)"
     else:
         return "Night (12 AM - 6 AM)"
+# ... (Keep all previous imports and setup code until crime data generation)
+
+# Define crime types and their associated evidence
+crime_evidence = {
+    "Assault": "A heavy metal rod was found at the scene with fingerprints.",
+    "Burglary": "Pry marks on the door match a specific crowbar pattern.",
+    "Kidnapping": "Residue of chloroform detected on a nearby cloth.",
+    "Theft": "Bag strap cut cleanly with a small sharp blade.",
+    "Robbery": "Security footage shows a handgun was used.",
+    "Fraud": "Forged documents left behind at the scene."
+}
+
+# Define time periods
+def get_time_period(hour):
+    if 6 <= hour < 12:
+        return "Morning (6 AM - 12 PM)"
+    elif 12 <= hour < 18:
+        return "Afternoon (12 PM - 6 PM)"
+    elif 18 <= hour < 24:
+        return "Evening (6 PM - 12 AM)"
+    else:
+        return "Night (12 AM - 6 AM)"
 
 # Generate crime data (hidden time period/evidence)
 @st.cache_data
@@ -180,20 +202,18 @@ kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
 df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
-# Enhanced cluster hints with time patterns
+# Enhanced cluster hints with time patterns (without revealing location)
 def generate_cluster_hints(df):
     cluster_hints = {}
     for cluster in df['Cluster'].unique():
         cluster_data = df[df['Cluster'] == cluster]
         most_common_period = cluster_data["_Time_Period"].mode()[0]
-        location = cluster_data["Location"].mode()[0]
         
         # Get time pattern statistics
         period_counts = cluster_data["_Time_Period"].value_counts(normalize=True).to_dict()
         period_stats = "\n".join([f"- {k}: {v*100:.1f}% of cases" for k,v in period_counts.items()])
         
         cluster_hints[cluster] = {
-            "location": location,
             "time_pattern": f"Most crimes occur during {most_common_period}",
             "period_stats": period_stats
         }
@@ -215,11 +235,11 @@ st.header("🕵️ Investigation Toolkit")
 # Always show basic clues
 st.write(f"🔖 Age Estimate: {selected_case['Suspect_Age']-5}-{selected_case['Suspect_Age']+5} years")
 
-# Location analysis hint combining cluster and time patterns
+# Location analysis hint (without revealing exact location)
 cluster_info = generate_cluster_hints(df)[selected_case['Cluster']]
 st.write(f"""
 **📍 Location Analysis**  
-This area ({cluster_info['location']}) shows:  
+This area shows the following patterns:  
 {cluster_info['time_pattern']}  
 Time distribution:  
 {cluster_info['period_stats']}
