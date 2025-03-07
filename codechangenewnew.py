@@ -145,7 +145,7 @@ def main():
 
     # Display case data
     st.header("📊 Crime Database")
-    st.dataframe(df.drop(columns=["Time_Minutes"])  # Fixed missing parenthesis
+    st.dataframe(df.drop(columns=["Time_Minutes"]))  # Fixed missing parenthesis
 
     # Investigation Section
     st.divider()
