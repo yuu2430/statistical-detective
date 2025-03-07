@@ -119,10 +119,10 @@ def main():
                 common_time = f"{mode_result.mode[0]}:00"
             else:
                 common_time = "various times"
-            else:
-                common_time = "no time data"
+        else:
+            common_time = "no time data"
     except Exception:
-            common_time = "unavailable"
+        common_time = "unavailable"
 st.sidebar.write(f"🔻 Frequent crime time: {common_time}")
     # Game Controls
     # ... (maintain previous game logic for hints/guesses) ...
