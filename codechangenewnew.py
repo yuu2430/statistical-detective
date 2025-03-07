@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from sklearn.cluster import KMeans
 from scipy import stats  # For confidence interval calculation
 
@@ -97,7 +97,7 @@ def generate_crime_data():
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
             "Suspect_Age": random.randint(18, 50),
-            "Suspect_Gender": random.choice(["Male", "Female"]),
+            "Suspect_Gender": random.choice(["Male", "Female", "Other"]),  # More inclusive gender options
             "Weapon_Used": random.choice(["Knife", "Gun", "None"]),
             "Outcome": random.choice(["Unsolved", "Solved"]),
             "Time_Minutes": crime_time_minutes
@@ -117,10 +117,11 @@ st.dataframe(
 # Crime pattern detection
 location_map = {"Manjalpur": 0, "Fatehgunj": 1, "Gorwa": 2, "Makarpura": 3}
 df["Location_Code"] = df["Location"].map(location_map)
-df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
+df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1, "Other": 2})  # Updated gender mapping
 
+# Use multiple features for clustering (Location and Time_Minutes)
 kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location_Code"]])
+df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
 cluster_hints = {
@@ -138,28 +139,23 @@ if st.session_state.selected_case is None or st.session_state.new_game:
 
 selected_case = st.session_state.selected_case
 
-# Calculate the confidence interval for suspect age
-age_group = selected_case['Suspect_Age'] // 10 * 10
+# Calculate the confidence interval for suspect age using bootstrapping
+def bootstrap_confidence_interval(data, n_bootstrap=1000):
+    bootstrap_means = []
+    for _ in range(n_bootstrap):
+        sample = np.random.choice(data, size=len(data), replace=True)
+        bootstrap_means.append(np.mean(sample))
+    return np.percentile(bootstrap_means, [2.5, 97.5])
+
 age_data = df['Suspect_Age']
-age_count = age_data[(age_data // 10 * 10) == age_group].count()
-total_cases = len(age_data)
-
-# Proportion of suspects in the same age group
-proportion = age_count / total_cases
-
-# 95% confidence interval for proportion
-ci_low, ci_high = stats.norm.interval(0.95, loc=proportion, scale=np.sqrt(proportion * (1 - proportion) / total_cases))
-
-# Convert confidence interval into percentage
-confidence_percent_low = int(ci_low * 100)
-confidence_percent_high = int(ci_high * 100)
+ci_low, ci_high = bootstrap_confidence_interval(age_data)
 
 st.divider()
 st.header("🕵️Investigation Toolkit")
 
 # Hint system
 with st.expander("🔍 Reveal Investigation Clues", expanded=difficulty=="Easy"):
-    st.write(f"🔖 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
+    st.write(f"🔖 Probability suggests the suspect is likely between {int(ci_low)} and {int(ci_high)} years old (95% confidence).")
     st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
 
 # Investigation inputs
@@ -169,9 +165,9 @@ with col1:
 with col2:
     guessed_age = st.slider("Suspect Age", 18, 50, 30, key="suspect_age")
 with col3:
-    guessed_gender = st.radio("Suspect Gender", ["Male", "Female"], key="suspect_gender")
+    guessed_gender = st.radio("Suspect Gender", ["Male", "Female", "Other"], key="suspect_gender")
 
-guessed_gender = 0 if guessed_gender == "Male" else 1
+guessed_gender = 0 if guessed_gender == "Male" else 1 if guessed_gender == "Female" else 2
 
 # Submit investigation
 if st.button("Submit Findings", type="primary"):
@@ -187,18 +183,18 @@ if st.button("Submit Findings", type="primary"):
     else:
         feedback = []
         if not correct_location:
-            feedback.append("📍 Location doesn't match crime pattern")
+            feedback.append(f"📍 Location doesn't match. Correct location: {selected_case['Location']}")
         if abs(guessed_age - selected_case["Suspect_Age"]) > 5:
-            feedback.append("📈 Age estimate significantly off")
+            feedback.append(f"📈 Age estimate significantly off. Correct age: {selected_case['Suspect_Age']}")
         elif guessed_age != selected_case["Suspect_Age"]:
-            feedback.append("📈 Age estimate close but not exact")
+            feedback.append(f"📈 Age estimate close but not exact. Correct age: {selected_case['Suspect_Age']}")
         if guessed_gender != selected_case["Suspect_Gender"]:
-            feedback.append("👤 Gender probability mismatch")
+            feedback.append(f"👤 Gender mismatch. Correct gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
         
         if st.session_state.attempts > 0:
             st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
         else:
-            st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+            st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
             st.session_state.new_game = True  # Reset the game after running out of attempts
 
 # Reset the game if new_game is True
