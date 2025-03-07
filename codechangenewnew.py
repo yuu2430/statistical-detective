@@ -1,11 +1,8 @@
 import os
 import streamlit as st
-import pandas as pd
-import numpy as np
-import random
-from datetime import datetime, timedelta
-from sklearn.cluster import KMeans
-from scipy import stats  # For confidence interval calculation
+
+# Set page config must be the first Streamlit command
+st.set_page_config(layout="wide")  # Wide layout for better display
 
 # Check if Plotly is available
 try:
@@ -15,9 +12,14 @@ except ImportError:
     st.warning("Plotly is not installed. Interactive visualizations will be disabled.")
     PLOTLY_AVAILABLE = False
 
-os.environ["OMP_NUM_THREADS"] = "1"
+import pandas as pd
+import numpy as np
+import random
+from datetime import datetime, timedelta
+from sklearn.cluster import KMeans
+from scipy import stats  # For confidence interval calculation
 
-st.set_page_config(layout="wide")  # Wide layout for better display
+os.environ["OMP_NUM_THREADS"] = "1"
 
 st.title("\U0001F50E Statistical Detective")
 st.write("Use statistics and hints! Analyze the data, interpret the probabilities, and catch the suspect!")
