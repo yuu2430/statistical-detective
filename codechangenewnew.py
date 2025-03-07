@@ -244,7 +244,7 @@ if st.button("Submit Findings", type="primary"):
             # Reveal correct answers only after attempts are exhausted
             st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
             st.session_state.new_game = True  # Reset the game after running out of attempts
-
+            st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
 # Reset the game if new_game is True
 if st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
