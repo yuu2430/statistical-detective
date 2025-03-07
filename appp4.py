@@ -22,7 +22,7 @@ if "attempts" not in st.session_state or st.session_state.get("new_game", False)
 
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
-    crime_types = ["Violent Crimes", "Property Crimes", "Financial Crimes", "Drug-Related Crimes"]
+    crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
     locations = ["Gorwa", "Manjalpur", "Makarpura", "Fatehgunj"]
     data = []
     start_date = datetime(2024, 1, 1)
@@ -58,9 +58,9 @@ df['Cluster'] = kmeans.fit_predict(df[["Location_Code"]])
 df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
 
 cluster_hints = {
-    "High-Risk Zone A": "Data shows 70% of violent crimes here happen at night, often involving weapons.",
-    "High-Risk Zone B": "Statistically, financial crimes and fraud occur 60% of the time in this zone.",
-    "High-Risk Zone C": "Property crimes make up 55% of crimes in this area, usually in the evenings."
+    "High-Risk Zone A": "Data shows 70% of crimes here happen at night, often involving weapons.",
+    "High-Risk Zone B": "Statistically, fraud and pickpocketing occur 60% of the time in this zone.",
+    "High-Risk Zone C": "Burglary incidents make up 55% of crimes in this area, usually in the evenings."
 }
 
 df['Cluster_Hint'] = df['Cluster_Location'].map(cluster_hints)
