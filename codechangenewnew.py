@@ -107,19 +107,33 @@ st.sidebar.write(f"🎯 Score: {st.session_state.score}")
 # Generate crime data
 @st.cache_data
 def generate_crime_data():
-    crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
+    crime_types = ["Theft", "Robbery", "Assault", "Burglary", "Fraud", "Kidnapping"]
     locations = ["Manjalpur", "Fatehgunj", "Gorwa", "Makarpura"]
     data = []
     for _ in range(10):  # Generate 10 cases
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
+        crime_type = random.choice(crime_types)
+        # Dynamically assign weapon based on crime type
+        if crime_type == "Theft":
+            weapon = random.choice(["None", "Knife"])
+        elif crime_type == "Robbery":
+            weapon = random.choice(["Gun", "Knife"])
+        elif crime_type == "Assault":
+            weapon = random.choice(["Knife", "Blunt Object"])
+        elif crime_type == "Burglary":
+            weapon = random.choice(["None", "Crowbar"])
+        elif crime_type == "Fraud":
+            weapon = "None"
+        elif crime_type == "Kidnapping":
+            weapon = random.choice(["None", "Gun"])
         data.append({
             "Time": formatted_time,
             "Location": random.choice(locations),
-            "Crime_Type": random.choice(crime_types),
+            "Crime_Type": crime_type,
             "Suspect_Age": random.randint(18, 50),
             "Suspect_Gender": random.choice(["Male", "Female", "Other"]),
-            "Weapon_Used": random.choice(["Knife", "Gun", "None"]),
+            "Weapon_Used": weapon,
             "Outcome": random.choice(["Unsolved", "Solved"]),
             "Time_Minutes": crime_time_minutes
         })
@@ -150,17 +164,16 @@ def generate_cluster_hints(df):
     cluster_hints = {}
     for cluster in df['Cluster'].unique():
         cluster_data = df[df['Cluster'] == cluster]
-        night_crimes = cluster_data[cluster_data['Time_Minutes'] >= 720]  # Assuming night is after 12 PM
+        night_crimes = cluster_data[cluster_data['Time_Minutes'] >= 1260]  # 9 PM - 5:59 AM
         weapon_crimes = cluster_data[cluster_data['Weapon_Used'] != "None"]
-        fraud_crimes = cluster_data[cluster_data['Crime_Type'] == "Fraud"]
         burglary_crimes = cluster_data[cluster_data['Crime_Type'] == "Burglary"]
         
         if cluster == 0:
-            hint = f"Data shows {len(night_crimes) / len(cluster_data) * 100:.0f}% of crimes here happen at night, often involving weapons."
+            hint = f"Crimes in this area often occur at night ({len(night_crimes) / len(cluster_data) * 100:.0f}% of cases)."
         elif cluster == 1:
-            hint = f"Statistically, fraud and pickpocketing occur {len(fraud_crimes) / len(cluster_data) * 100:.0f}% of the time in this zone."
+            hint = f"This area has a high frequency of burglaries ({len(burglary_crimes) / len(cluster_data) * 100:.0f}% of cases)."
         elif cluster == 2:
-            hint = f"Burglary incidents make up {len(burglary_crimes) / len(cluster_data) * 100:.0f}% of crimes in this area, usually in the evenings."
+            hint = f"Weapons are commonly used in crimes here ({len(weapon_crimes) / len(cluster_data) * 100:.0f}% of cases)."
         
         cluster_hints[f"High-Risk Zone {chr(65 + cluster)}"] = hint
     return cluster_hints
