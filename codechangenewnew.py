@@ -213,13 +213,13 @@ if st.button("Submit Findings", type="primary"):
     else:
         feedback = []
         if not correct_location:
-            feedback.append(f"📍 Location doesn't match. Correct location: {selected_case['Location']}")
+            feedback.append("📍 Location doesn't match.")
         if abs(guessed_age - selected_case["Suspect_Age"]) > 5:
-            feedback.append(f"📈 Age estimate significantly off. Correct age: {selected_case['Suspect_Age']}")
+            feedback.append("📈 Age estimate significantly off.")
         elif guessed_age != selected_case["Suspect_Age"]:
-            feedback.append(f"📈 Age estimate close but not exact. Correct age: {selected_case['Suspect_Age']}")
+            feedback.append("📈 Age estimate close but not exact.")
         if guessed_gender != selected_case["Suspect_Gender"]:
-            feedback.append(f"👤 Gender mismatch. Correct gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
+            feedback.append("👤 Gender mismatch.")
         
         if st.session_state.attempts > 0:
             st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
