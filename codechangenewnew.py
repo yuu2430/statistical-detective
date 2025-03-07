@@ -91,7 +91,7 @@ if "hints_revealed" not in st.session_state:
 # Game title and storyline
 st.title("🔍 Statistical Detective")
 st.write("""
-### 🕵️‍♂️ The Case of the Elusive Suspect
+### 🕵️‍♂️ The Case of the Serial Suspect
 The city is in chaos! A series of crimes have been reported, and the police need your help to catch the suspects. 
 Use your statistical skills to analyze the data, interpret the clues, and identify the culprits. 
 Can you solve the case before time runs out?
