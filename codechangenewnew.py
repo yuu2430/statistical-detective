@@ -79,25 +79,25 @@ def generate_crime_data():
     patterns = {
         "Street Robbery": {
             "locations": ["Manjalpur", "Fatehgunj"],
-            "time_range": (20, 6),  # 8PM-6AM
+            "time_range": (18, 23),  # 6PM-11PM
             "age_range": (20, 35),
             "gender_bias": {"Male": 0.85, "Female": 0.15}
         },
         "Vehicle Theft": {
             "locations": ["Makarpura", "Gorwa"],
-            "time_range": (22, 4),  # 10PM-4AM
+            "time_range": (20, 4),   # 8PM-4AM (handled as two ranges)
             "age_range": (25, 40),
             "gender_bias": {"Male": 0.9, "Female": 0.1}
         },
         "Chain Snatching": {
             "locations": ["Fatehgunj", "Manjalpur"],
-            "time_range": (18, 23),  # 6PM-11PM
+            "time_range": (16, 20),  # 4PM-8PM
             "age_range": (18, 30),
-            "gender_bias": {"Male": 0.95, "Female": 0.05)
+            "gender_bias": {"Male": 0.95, "Female": 0.05}
         },
         "Cyber Fraud": {
             "locations": ["Gorwa", "Makarpura"],
-            "time_range": (10, 16),  # 10AM-4PM
+            "time_range": (9, 17),   # 9AM-5PM
             "age_range": (25, 45),
             "gender_bias": {"Male": 0.7, "Female": 0.3}
         }
@@ -111,9 +111,17 @@ def generate_crime_data():
         # Generate location
         location = random.choice(pattern["locations"])
         
-        # Generate time
+        # Generate time with proper range handling
         start_hour, end_hour = pattern["time_range"]
-        hour = random.randint(start_hour, end_hour) % 24
+        if start_hour <= end_hour:
+            hour = random.randint(start_hour, end_hour)
+        else:
+            # Handle overnight ranges (e.g., 20-4 becomes 20-23 and 0-4)
+            first_part = list(range(start_hour, 24))
+            second_part = list(range(0, end_hour + 1))
+            possible_hours = first_part + second_part
+            hour = random.choice(possible_hours)
+        
         minute = random.choice(["00", "15", "30", "45"])
         time = f"{hour:02d}:{minute}"
         
@@ -150,25 +158,25 @@ def generate_hints(selected_case, difficulty_level):
     pattern = {
         "Street Robbery": {
             "locations": ["Manjalpur", "Fatehgunj"],
-            "time": "late evening to early morning",
+            "time": "evening hours (6PM-11PM)",
             "age": "typically 20-35 years old",
-            "gender": "almost always male (85%)"
+            "gender": "mostly male (85%)"
         },
         "Vehicle Theft": {
             "locations": ["Makarpura", "Gorwa"],
-            "time": "late night hours (10PM-4AM)",
+            "time": "late night to early morning (8PM-4AM)",
             "age": "usually 25-40 years old",
             "gender": "predominantly male (90%)"
         },
         "Chain Snatching": {
             "locations": ["Fatehgunj", "Manjalpur"],
-            "time": "evening rush hours",
+            "time": "evening rush hours (4PM-8PM)",
             "age": "young adults (18-30 years)",
             "gender": "overwhelmingly male (95%)"
         },
         "Cyber Fraud": {
             "locations": ["Gorwa", "Makarpura"],
-            "time": "daytime working hours",
+            "time": "daytime working hours (9AM-5PM)",
             "age": "25-45 years old",
             "gender": "mostly male (70%)"
         }
@@ -247,4 +255,3 @@ if st.button("🔄 Start New Case"):
     st.session_state.target_case = df.sample(1).iloc[0]
     st.session_state.attempts = current_difficulty["attempts"]
     st.rerun()
-    
