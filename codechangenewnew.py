@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import random
 from datetime import datetime
-from sklearn.cluster import KMeans
 
 # Initialize Streamlit configuration
 st.set_page_config(
@@ -13,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for styling (keep previous styles)
+# Custom CSS for styling
 st.markdown("""
     <style>
     .stApp {
