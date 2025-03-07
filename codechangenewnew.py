@@ -121,7 +121,7 @@ if st.session_state.attempts > 0:
             if not correct_gender:
                 feedback.append("Gender statistics indicate a different suspect...")
 
-            if st.session_state.attempts == 0:
+            if st.session_state.attempts > 1:
                 st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
             else:
                 # Reveal the correct answer when attempts are exhausted
