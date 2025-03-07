@@ -71,14 +71,10 @@ st.write("*Use statistics and hints! Analyze the data, interpret the probabiliti
 
 # Game difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
-
-# Sidebar for game controls
-with st.sidebar:
-    st.header("🕹️ Game Controls")
-    difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
-    attempts_left = difficulty_levels[difficulty]
-    if "attempts" not in st.session_state or st.session_state.get("new_game", False):
-        st.session_state.attempts = attempts_left
+difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
+attempts_left = difficulty_levels[difficulty]
+if "attempts" not in st.session_state or st.session_state.get("new_game", False):
+    st.session_state.attempts = attempts_left
 
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
@@ -87,10 +83,13 @@ def generate_crime_data():
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
-    for i in range(1, 11):  # Generate 10 cases
+    for i in range(1, 11):  # Generate 20 cases
+        crime_date = start_date + timedelta(days=random.randint(0, (end_date - start_date).days))
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         data.append({
+            "Case_ID": i,
+            "Date": crime_date.strftime('%Y-%m-%d'),
             "Time": formatted_time,
             "Location": random.choice(locations),
             "Crime_Type": random.choice(crime_types),
@@ -152,56 +151,58 @@ ci_low, ci_high = stats.norm.interval(0.95, loc=proportion, scale=np.sqrt(propor
 confidence_percent_low = int(ci_low * 100)
 confidence_percent_high = int(ci_high * 100)
 
-# Sidebar for investigation inputs
-with st.sidebar:
-    st.divider()
-    st.header("🕵️♂️ Investigation Toolkit")
+st.divider()
+st.header("🕵️♂️ Investigation Toolkit")
 
-    # Hint system
-    with st.expander("🔍 Reveal Investigation Clues", expanded=difficulty=="Easy"):
-        st.write(f"🔖 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
-        st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
+# Hint system
+with st.expander("🔍 Reveal Investigation Clues", expanded=difficulty=="Easy"):
+    st.write(f"🔖 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
+    st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
 
-    # Investigation inputs
+# Investigation inputs
+col1, col2, col3 = st.columns(3)
+with col1:
     guessed_location = st.selectbox("Crime Location", list(location_map.keys()), key="crime_location")
+with col2:
     guessed_age = st.slider("Suspect Age", 18, 50, 30, key="suspect_age")
+with col3:
     guessed_gender = st.radio("Suspect Gender", ["Male", "Female"], key="suspect_gender")
 
-    guessed_gender = 0 if guessed_gender == "Male" else 1
+guessed_gender = 0 if guessed_gender == "Male" else 1
 
-    # Submit investigation
-    if st.button("Submit Findings", type="primary"):
-        st.session_state.attempts -= 1
-        correct_location = guessed_location == selected_case["Location"]
-        correct_age = guessed_age == selected_case["Suspect_Age"]
-        correct_gender = guessed_gender == selected_case["Suspect_Gender"]
+# Submit investigation
+if st.button("Submit Findings", type="primary"):
+    st.session_state.attempts -= 1
+    correct_location = guessed_location == selected_case["Location"]
+    correct_age = guessed_age == selected_case["Suspect_Age"]
+    correct_gender = guessed_gender == selected_case["Suspect_Gender"]
+    
+    if correct_location and correct_age and correct_gender:
+        st.success("🎉 Case Solved! You've identified the suspect!")
+        st.balloons()
+    else:
+        feedback = []
+        if not correct_location:
+            feedback.append("📍 Location doesn't match crime pattern")
+        if abs(guessed_age - selected_case["Suspect_Age"]) > 5:
+            feedback.append("📈 Age estimate significantly off")
+        elif guessed_age != selected_case["Suspect_Age"]:
+            feedback.append("📈 Age estimate close but not exact")
+        if guessed_gender != selected_case["Suspect_Gender"]:
+            feedback.append("👤 Gender probability mismatch")
         
-        if correct_location and correct_age and correct_gender:
-            st.success("🎉 Case Solved! You've identified the suspect!")
-            st.balloons()
+        if st.session_state.attempts > 0:
+            st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
         else:
-            feedback = []
-            if not correct_location:
-                feedback.append("📍 Location doesn't match crime pattern")
-            if abs(guessed_age - selected_case["Suspect_Age"]) > 5:
-                feedback.append("📈 Age estimate significantly off")
-            elif guessed_age != selected_case["Suspect_Age"]:
-                feedback.append("📈 Age estimate close but not exact")
-            if guessed_gender != selected_case["Suspect_Gender"]:
-                feedback.append("👤 Gender probability mismatch")
-            
-            if st.session_state.attempts > 0:
-                st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
-            else:
-                st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
-                st.session_state.selected_case = df.sample(1).iloc[0]
-                st.session_state.attempts = difficulty_levels[difficulty]
+            st.error(f"❌ Case Closed. Correct answer: {selected_case['Location']}, Age {selected_case['Suspect_Age']}, {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+            st.session_state.selected_case = df.sample(1).iloc[0]
+            st.session_state.attempts = difficulty_levels[difficulty]
 
-    # Status bar
-    st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
+# Status bar
+st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
 
-    # New case button
-    if st.button("🔄 Start New Case"):
-        st.session_state.selected_case = df.sample(1).iloc[0]
-        st.session_state.attempts = difficulty_levels[difficulty]
-        st.rerun()
+# New case button
+if st.button("🔄 Start New Case"):
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.attempts = difficulty_levels[difficulty]
+    st.rerun()
