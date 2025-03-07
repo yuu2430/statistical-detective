@@ -6,7 +6,14 @@ import random
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from scipy import stats  # For confidence interval calculation
-import plotly.express as px
+
+# Check if Plotly is available
+try:
+    import plotly.express as px
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    st.warning("Plotly is not installed. Interactive visualizations will be disabled.")
+    PLOTLY_AVAILABLE = False
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
@@ -94,9 +101,12 @@ st.write(f"\U0001F4CD Attempts left: {st.session_state.attempts}")
 # Progress bar for attempts
 st.progress(st.session_state.attempts / difficulty_levels[difficulty])
 
-# Interactive visualization
-fig = px.scatter(df, x="Location_Code", y="Time_Minutes", color="Cluster_Location", title="Crime Locations and Times")
-st.plotly_chart(fig, use_container_width=True)
+# Interactive visualization (if Plotly is available)
+if PLOTLY_AVAILABLE:
+    fig = px.scatter(df, x="Location_Code", y="Time_Minutes", color="Cluster_Location", title="Crime Locations and Times")
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.write("Interactive visualizations are disabled because Plotly is not installed.")
 
 if not st.session_state.game_over:
     guessed_location = st.selectbox("Where did the crime occur?", list(location_map.keys()), key="crime_location")
