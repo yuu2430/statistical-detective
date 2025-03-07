@@ -15,7 +15,7 @@ st.set_page_config(
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-# Updated Nature-inspired Color Theme with lighter table
+# Updated Nature-inspired Color Theme with original table styling
 st.markdown("""
     <style>
     .stApp {
@@ -62,20 +62,20 @@ st.markdown("""
         color: #ffffff !important;
         border: 1px solid #4f2022;
     }
-    .dataframe {
-        background-color: #f5f0e6 !important;
-        border: 2px solid #9a816b !important;
-    }
-    .dataframe th {
-        background-color: #e0d5c4 !important;
-        color: #4f2022 !important;
-    }
-    .dataframe td {
-        background-color: #f5f0e6 !important;
-        color: #4f2022 !important;
-    }
     </style>
     """, unsafe_allow_html=True)
+
+# [ALL GAME CODE REMAINS THE SAME UNTIL THE DATA DISPLAY SECTION]
+
+# Display crime database without scrolling (original table styling)
+st.header("📊 Recent Crime Cases")
+st.dataframe(
+    df,
+    use_container_width=True,
+    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
+)
+
+# [REST OF THE CODE REMAINS EXACTLY THE SAME]
 
 st.title("🔍 Vadodara Crime Solver")
 st.write("*Analyze local crime patterns and catch the culprit!*")
