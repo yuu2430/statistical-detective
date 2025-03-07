@@ -23,7 +23,7 @@ if "attempts" not in st.session_state or st.session_state.get("new_game", False)
 @st.cache_data  # Cache dataset to keep cases consistent
 def generate_crime_data():
     crime_types = ["Robbery", "Assault", "Burglary", "Fraud", "Arson"]
-    locations = ["Downtown", "City Park", "Suburbs", "Industrial Area", "Mall"]
+    locations = ["Gorwa", "Manjalpur", "Makarpura", "Fatehgunj"]
     data = []
     start_date = datetime(2024, 1, 1)
     end_date = datetime(2025, 2, 1)
@@ -49,7 +49,7 @@ df = generate_crime_data()
 st.dataframe(df.drop(columns=["Time_Minutes"], errors="ignore"), use_container_width=True)
 
 # Crime pattern detection
-location_map = {"Downtown": 0, "City Park": 1, "Suburbs": 2, "Industrial Area": 3, "Mall": 4}
+location_map = {"Gorwa": 0, "Manjalpur": 1, "Makarpura": 2, "Fatehgunj": 3}
 df["Location_Code"] = df["Location"].map(location_map)
 df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1})
 
