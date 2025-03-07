@@ -231,10 +231,6 @@ st.write(f"🔖 Location Analysis: {selected_case['Cluster_Hint']}")
 
 # Gradual hints based on attempts
 if st.session_state.hints_revealed >= 1:
-    st.write(f"🔖 Crime Type: The crime type is {selected_case['Crime_Type']}.")
-if st.session_state.hints_revealed >= 2:
-    st.write(f"🔖 Weapon Used: The weapon used was {selected_case['Weapon_Used']}.")
-if st.session_state.hints_revealed >= 3:
     st.write(f"🔖 Crime Scene Evidence: {selected_case['Crime_Scene_Evidence']}")
 
 # Investigation inputs
