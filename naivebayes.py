@@ -70,15 +70,52 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 st.write(f"🔍 Naïve Bayes Model Accuracy: {accuracy_score(y_test, y_pred) * 100:.2f}%")
 
+# Select a case for the player
+if "selected_case" not in st.session_state or st.session_state.get("new_game", False):
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.new_game = False
+
+selected_case = st.session_state.selected_case
+
 # Predict Crime Type for Selected Case
-selected_location = random.choice(["Manjalpur", "Fatehgunj", "Gorwa", "Makarpura"])
-selected_time = df.sample(1)['Time'].values[0]
-selected_location_code = label_encoder_location.transform([selected_location])[0]
-selected_time_code = label_encoder_time.transform([selected_time])[0]
+selected_location_code = label_encoder_location.transform([selected_case['Location']])[0]
+selected_time_code = label_encoder_time.transform([selected_case['Time']])[0]
 predicted_crime_code = model.predict([[selected_location_code, selected_time_code]])[0]
 predicted_crime = label_encoder_crime.inverse_transform([predicted_crime_code])[0]
 
-st.write(f"⚠ AI Prediction: Based on past data, the most likely crime at {selected_location} around {selected_time} is *{predicted_crime}*.")
+st.write(f"⚠ AI Prediction: Based on past data, the most likely crime at {selected_case['Location']} around {selected_case['Time']} is *{predicted_crime}*.")
+
+st.write(f"🔢 Attempts left: {st.session_state.attempts}")
+
+guessed_location = st.selectbox("Where did the crime occur?", list(label_encoder_location.classes_), key="crime_location")
+guessed_age = st.slider("What is the suspect's age?", 18, 50, key="suspect_age")
+guessed_gender = st.radio("What is the suspect's gender?", ["Male", "Female"], key="suspect_gender")
+guessed_gender = 0 if guessed_gender == "Male" else 1
+
+if st.button("Submit Guess", key="submit_guess"):
+    correct_location = guessed_location == selected_case["Location"]
+    correct_age = guessed_age == selected_case["Suspect_Age"]
+    correct_gender = guessed_gender == (0 if selected_case["Suspect_Gender"] == "Male" else 1)
+    
+    if correct_location and correct_age and correct_gender:
+        st.success(f"\U0001F389 Correct! You've solved the case. Reward: \U0001F396 {difficulty} Level Badge")
+    else:
+        st.session_state.attempts -= 1
+        feedback = []
+        if not correct_location:
+            feedback.append("The location probability suggests another area...")
+        if not correct_age:
+            feedback.append("The age probability doesn't align with the data...")
+        if not correct_gender:
+            feedback.append("Gender statistics indicate a different suspect...")
+        
+        if st.session_state.attempts > 0:
+            st.error("\U0001F480 Not quite! " + " ".join(feedback) + f" Attempts left: {st.session_state.attempts}")
+        else:
+            st.error("\U0001F480 No attempts left! The correct answer was:")
+            st.write(f"📍 Location: {selected_case['Location']}")
+            st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
+            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
 
 if st.button("🔄 New Game"):
     st.session_state.new_game = True
