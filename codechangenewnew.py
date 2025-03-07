@@ -97,9 +97,7 @@ if not st.session_state.game_over:
     guessed_gender = 0 if guessed_gender == "Male" else 1
 
     if st.button("Submit Guess", key="submit_guess") and not st.session_state.game_over:
-        if st.session_state.attempts > 0:
-            st.session_state.attempts -= 1  # Ensure decrement before checking game over state
-            st.experimental_rerun()  # Force Streamlit to update UI dynamically
+        st.session_state.attempts -= 1  # Decrement attempts before checking conditions
 
         correct_location = guessed_location == selected_case["Location"]
         correct_age = guessed_age == selected_case["Suspect_Age"]
@@ -117,6 +115,7 @@ if not st.session_state.game_over:
                 st.write(f"📍 Location: {selected_case['Location']}")
                 st.write(f"\U0001F575 Age: {selected_case['Suspect_Age']}")
                 st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female'}")
+
 
 
 if st.session_state.game_over:
