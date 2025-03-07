@@ -139,4 +139,5 @@ if st.button("Submit Guess", key="submit_guess"):
 if st.button("🔄 New Game"):
     st.session_state.new_game = True
     st.session_state.attempts = difficulty_levels[difficulty]
+    st.cache_data.clear()  # Clear previous dataset to generate new random crime cases
     st.rerun()
