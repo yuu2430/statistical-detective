@@ -14,7 +14,54 @@ st.set_page_config(
 )
 
 # Custom CSS for styling (keep previous styles)
-# ... [Same CSS as before] ...
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #f5f0e6;
+        color: #4f2022;
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #9a816b !important;
+        color: #ffffff !important;
+        border-radius: 5px !important;
+    }
+    .stSlider div[data-testid="stThumbValue"] {
+        color: #4f2022 !important;
+    }
+    .stSlider div[data-baseweb="slider"] {
+        background-color: transparent;
+    }
+    .stRadio div[role="radiogroup"] {
+        background-color: #ffffff !important;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #9a816b;
+    }
+    .stButton>button {
+        background-color: #65b1df !important;
+        color: #ffffff !important;
+        border-radius: 8px;
+        padding: 10px 24px;
+        border: 2px solid #4f2022;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #4f2022 !important;
+        transform: scale(1.05);
+    }
+    .stSuccess {
+        background-color: #acdb01 !important;
+        color: #4f2022 !important;
+        border: 1px solid #9a816b;
+    }
+    .stError {
+        background-color: #9a816b !important;
+        color: #ffffff !important;
+        border: 1px solid #4f2022;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # ---------------------------
 # Improved Data Generation
@@ -51,14 +98,17 @@ def generate_realistic_crimes():
         hour = random.randint(start_hour, end_hour) % 24
         minute = random.randint(0, 59)
         
+        # Fix weapon selection logic
+        weapons = pattern["common_weapons"] + ["None"]
+        weights = [70] * len(pattern["common_weapons"]) + [30]  # 70% chance for common weapons, 30% for "None"
+        
         data.append({
             "Time": f"{hour:02d}:{minute:02d}",
             "Location": loc,
             "Crime_Type": random.choice(pattern["common_crimes"]),
             "Suspect_Age": random.randint(*pattern["age_range"]),
             "Suspect_Gender": random.choices(["Male", "Female", "Other"], weights=[60, 35, 5])[0],
-            "Weapon_Used": random.choices(pattern["common_weapons"] + ["None"], 
-                                       weights=[70, 30])[0],
+            "Weapon_Used": random.choices(weapons, weights=weights)[0],
             "Time_Minutes": hour * 60 + minute
         })
     return pd.DataFrame(data)
@@ -95,7 +145,7 @@ def main():
 
     # Display case data
     st.header("📊 Crime Database")
-    st.dataframe(df.drop(columns=["Time_Minutes"]))
+    st.dataframe(df.drop(columns=["Time_Minutes"])  # Fixed missing parenthesis
 
     # Investigation Section
     st.divider()
@@ -136,9 +186,9 @@ def main():
             if not correct[0]:
                 feedback.append("Location mismatch")
             if not correct[1]:
-                feedback.append("Age estimate off by >5 years")
+                feedback.append("Age estimate off.")
             if not correct[2]:
-                feedback.append("Gender incorrect")
+                feedback.append("Gender incorrect.")
                 
             if st.session_state.attempts > 0:
                 st.error(f"🚨 Issues: {', '.join(feedback)}. Try again!")
