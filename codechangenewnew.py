@@ -1,87 +1,8 @@
 import os
 import streamlit as st
 import pandas as pd
-import numpy as np
 import random
 from datetime import datetime
-from sklearn.cluster import KMeans
-
-# Debug: Ensure Streamlit is properly imported
-try:
-    print(f"Streamlit version: {st.__version__}")
-except NameError:
-    st.error("Streamlit is not properly imported. Please ensure you're running this script with `streamlit run`.")
-    st.stop()
-
-# Initialize Streamlit configuration
-st.set_page_config(
-    page_title="🔍 Statistical Detective",
-    page_icon="🕵️",
-    layout="wide"
-)
-
-# Set environment variable for KMeans (to avoid warnings)
-os.environ["OMP_NUM_THREADS"] = "1"
-
-# Custom CSS for styling
-st.markdown("""
-    <style>
-    .stApp {
-        background-color: #f5f0e6;
-        color: #4f2022;
-        font-family: 'Helvetica Neue', sans-serif;
-    }
-    .stSelectbox div[data-baseweb="select"] > div {
-        background-color: #9a816b !important;
-        color: #ffffff !important;
-        border-radius: 5px !important;
-    }
-    .stSlider div[data-testid="stThumbValue"] {
-        color: #4f2022 !important;
-    }
-    .stSlider div[data-baseweb="slider"] {
-        background-color: transparent;
-    }
-    .stRadio div[role="radiogroup"] {
-        background-color: #ffffff !important;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #9a816b;
-    }
-    .stButton>button {
-        background-color: #65b1df !important;
-        color: #ffffff !important;
-        border-radius: 8px;
-        padding: 10px 24px;
-        border: 2px solid #4f2022;
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #4f2022 !important;
-        transform: scale(1.05);
-    }
-    .stSuccess {
-        background-color: #acdb01 !important;
-        color: #4f2022 !important;
-        border: 1px solid #9a816b;
-    }
-    .stError {
-        background-color: #9a816b !important;
-        color: #ffffff !important;
-        border: 1px solid #4f2022;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Sidebar for game instructions and status
-st.sidebar.header("How to Play")
-st.sidebar.write("""
-1. Select a difficulty level.
-2. Analyze the crime data and use the hints provided.
-3. Guess the suspect's location, age, and gender.
-4. Submit your findings and see if you're correct!
-5. You have a limited number of attempts. Use them wisely!
-""")
 
 # Initialize session state
 if "score" not in st.session_state:
@@ -97,15 +18,6 @@ if "hints_revealed" not in st.session_state:
 if "current_difficulty" not in st.session_state:
     st.session_state.current_difficulty = "Easy"  # Default difficulty
 
-# Game title and storyline
-st.title("🔍 Statistical Detective")
-st.write("""
-### 🕵️‍♂️ The Case of the Serial Suspect
-The city is in chaos! A series of crimes have been reported, and the police need your help to catch the suspects. 
-Use your statistical skills to analyze the data, interpret the clues, and identify the culprits. 
-Can you solve the case before time runs out?
-""")
-
 # Difficulty settings
 difficulty_levels = {"Easy": 4, "Hard": 3, "Expert": 2}  # Number of hints based on difficulty
 difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys()), key="difficulty")
@@ -114,9 +26,6 @@ difficulty = st.selectbox("Select Difficulty Level", list(difficulty_levels.keys
 if st.session_state.current_difficulty != difficulty:
     st.session_state.attempts = difficulty_levels[difficulty]
     st.session_state.current_difficulty = difficulty
-
-# Display score
-st.sidebar.write(f"🎯 Score: {st.session_state.score}")
 
 # Generate crime data
 @st.cache_data
@@ -128,19 +37,7 @@ def generate_crime_data():
         crime_time_minutes = random.randint(0, 1439)
         formatted_time = datetime.strptime(f"{crime_time_minutes // 60}:{crime_time_minutes % 60}", "%H:%M").strftime("%I:%M %p")
         crime_type = random.choice(crime_types)
-        # Dynamically assign weapon based on crime type
-        if crime_type == "Theft":
-            weapon = random.choice(["None", "Knife"])
-        elif crime_type == "Robbery":
-            weapon = random.choice(["Gun", "Knife"])
-        elif crime_type == "Assault":
-            weapon = random.choice(["Knife", "Blunt Object"])
-        elif crime_type == "Burglary":
-            weapon = random.choice(["None", "Crowbar"])
-        elif crime_type == "Fraud":
-            weapon = "None"
-        elif crime_type == "Kidnapping":
-            weapon = random.choice(["None", "Gun"])
+        weapon = random.choice(["None", "Knife", "Gun", "Blunt Object", "Crowbar"])
         data.append({
             "Time": formatted_time,
             "Location": random.choice(locations),
@@ -155,23 +52,13 @@ def generate_crime_data():
 
 df = generate_crime_data()
 
-# Display crime database
-st.header("📊 Recent Crime Cases")
-st.dataframe(
-    df.drop(columns=["Time_Minutes"], errors="ignore"),
-    use_container_width=True,
-    height=(len(df) + 1) * 35 + 3  # Dynamic height based on rows
-)
+# Select a case for the player
+if st.session_state.selected_case is None or st.session_state.new_game:
+    st.session_state.selected_case = df.sample(1).iloc[0]
+    st.session_state.new_game = False
+    st.session_state.hints_revealed = 0  # Reset hints for new case
 
-# Crime pattern detection
-location_map = {"Manjalpur": 0, "Fatehgunj": 1, "Gorwa": 2, "Makarpura": 3}
-df["Location_Code"] = df["Location"].map(location_map)
-df["Suspect_Gender"] = df["Suspect_Gender"].map({"Male": 0, "Female": 1, "Other": 2})
-
-# Use multiple features for clustering
-kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
-df['Cluster'] = kmeans.fit_predict(df[["Location_Code", "Time_Minutes"]])
-df['Cluster_Location'] = df['Cluster'].map({0: "High-Risk Zone A", 1: "High-Risk Zone B", 2: "High-Risk Zone C"})
+selected_case = st.session_state.selected_case
 
 # Generate intelligent hints
 def generate_intelligent_hints(selected_case):
@@ -188,18 +75,6 @@ def generate_intelligent_hints(selected_case):
     hints.append(f"The suspect is likely between {selected_case['Suspect_Age'] - 5} and {selected_case['Suspect_Age'] + 5} years old.")
     return hints
 
-# Select a case for the player
-if st.session_state.selected_case is None or st.session_state.new_game:
-    st.session_state.selected_case = df.sample(1).iloc[0]
-    st.session_state.new_game = False
-    st.session_state.hints_revealed = 0  # Reset hints for new case
-
-selected_case = st.session_state.selected_case
-
-# Investigation toolkit
-st.divider()
-st.header("🕵️ Investigation Toolkit")
-
 # Show hints based on difficulty
 hints = generate_intelligent_hints(selected_case)
 for i in range(st.session_state.hints_revealed):
@@ -208,18 +83,13 @@ for i in range(st.session_state.hints_revealed):
 # Investigation inputs
 col1, col2, col3 = st.columns(3)
 with col1:
-    guessed_location = st.selectbox("Crime Location", list(location_map.keys()), key="crime_location")
+    guessed_location = st.selectbox("Crime Location", list(df["Location"].unique()), key="crime_location")
 with col2:
     guessed_age = st.slider("Suspect Age", 18, 50, 30, key="suspect_age")
 with col3:
     guessed_gender = st.radio("Suspect Gender", ["Male", "Female", "Other"], key="suspect_gender")
 
 guessed_gender = 0 if guessed_gender == "Male" else 1 if guessed_gender == "Female" else 2
-
-# Show hints based on difficulty
-hints = generate_intelligent_hints(selected_case)
-for i in range(st.session_state.hints_revealed):
-    st.write(f"🔖 Hint {i + 1}: {hints[i]}")
 
 # Submit investigation
 if st.button("Submit Findings", type="primary"):
@@ -256,20 +126,13 @@ if st.button("Submit Findings", type="primary"):
 
     # Rerun the app to update the state
     st.rerun()
+
 # Manual restart button (for starting a new game)
 if st.button("🔄 Restart Game (Manual Reset)"):
     st.session_state.new_game = True
     st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts based on difficulty
     st.session_state.hints_revealed = 0  # Reset hints for new case
     st.session_state.selected_case = df.sample(1).iloc[0]  # Select a new case
-    st.rerun()
-
-# Reset the game if new_game is True
-if st.session_state.new_game:
-    st.session_state.selected_case = df.sample(1).iloc[0]
-    st.session_state.attempts = difficulty_levels[difficulty]
-    st.session_state.new_game = False
-    st.session_state.hints_revealed = 0  # Reset hints for new case
     st.rerun()
 
 # Status bar
