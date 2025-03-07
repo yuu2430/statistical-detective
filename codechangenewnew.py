@@ -94,6 +94,8 @@ if "new_game" not in st.session_state:
     st.session_state.new_game = True
 if "hints_revealed" not in st.session_state:
     st.session_state.hints_revealed = 0  # Track how many hints have been revealed
+if "show_correct_answer" not in st.session_state:
+    st.session_state.show_correct_answer = False  # Track whether to show the correct answer
 
 # Game title and storyline
 st.title("🔍 Statistical Detective")
@@ -194,6 +196,7 @@ if st.session_state.selected_case is None or st.session_state.new_game:
     st.session_state.selected_case = df.sample(1).iloc[0]
     st.session_state.new_game = False
     st.session_state.hints_revealed = 0  # Reset hints for new case
+    st.session_state.show_correct_answer = False  # Reset correct answer display
 
 selected_case = st.session_state.selected_case
 
@@ -238,35 +241,28 @@ if st.button("Submit Findings", type="primary"):
         feedback = []
         if not correct_location:
             feedback.append("📍 Location doesn't match.")
-        if abs(guessed_age - selected_case["Suspect_Age"]) > 5:
+        if abs(guessed_age - selected_case['Suspect_Age']) > 5:
             feedback.append("📈 Age estimate significantly off.")
-        elif guessed_age != selected_case["Suspect_Age"]:
+        elif guessed_age != selected_case['Suspect_Age']:
             feedback.append("📈 Age estimate close but not exact.")
-        if guessed_gender != selected_case["Suspect_Gender"]:
+        if guessed_gender != selected_case['Suspect_Gender']:
             feedback.append("👤 Gender mismatch.")
         
         if st.session_state.attempts > 0:
             st.error(f"🚨 Investigation Issues: {' • '.join(feedback)}")
             st.session_state.hints_revealed += 1  # Reveal more hints
         else:
-            # Reveal correct answers only after attempts are exhausted
-            st.error("❌ Case Closed. No attempts left! The correct answer was:")
-            st.write(f"📍 Location: {selected_case['Location']}")
-            st.write(f"🔢 Age: {selected_case['Suspect_Age']}")
-            st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
-            st.session_state.new_game = True  # Reset the game after running out of attempts
-            st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
+            st.session_state.show_correct_answer = True  # Show correct answer
 
-    # Rerun the app to update the state
-    st.rerun()
-
-# Reset the game if new_game is True
-if st.session_state.new_game:
-    st.session_state.selected_case = df.sample(1).iloc[0]
-    st.session_state.attempts = difficulty_levels[difficulty]
-    st.session_state.new_game = False
-    st.session_state.hints_revealed = 0  # Reset hints for new case
-    st.rerun()
+# Display correct answer if attempts are exhausted
+if st.session_state.show_correct_answer:
+    st.error("❌ Case Closed. No attempts left! The correct answer was:")
+    st.write(f"📍 Location: {selected_case['Location']}")
+    st.write(f"🔢 Age: {selected_case['Suspect_Age']}")
+    st.write(f"👤 Gender: {'Male' if selected_case['Suspect_Gender'] == 0 else 'Female' if selected_case['Suspect_Gender'] == 1 else 'Other'}")
+    st.session_state.new_game = True  # Reset the game after revealing the correct answer
+    st.session_state.attempts = difficulty_levels[difficulty]  # Reset attempts for the next game
+    st.session_state.show_correct_answer = False  # Reset correct answer display
 
 # Status bar
 st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
@@ -274,4 +270,5 @@ st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_s
 # New case button
 if st.button("🔄 Start New Case"):
     st.session_state.new_game = True
-    st.rerun()                                                                                                                                            
+    st.session_state.hints_revealed = 0  # Reset hints for new case
+    st.session_state.show_correct_answer = False  # Reset correct answer display
