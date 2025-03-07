@@ -16,6 +16,65 @@ st.set_page_config(
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
+# Add a tutorial or instructions at the beginning
+st.sidebar.header("How to Play")
+st.sidebar.write("""
+1. Select a difficulty level.
+2. Analyze the crime data and use the hints provided.
+3. Guess the suspect's location, age, and gender.
+4. Submit your findings and see if you're correct!
+5. You have a limited number of attempts. Use them wisely!
+""")
+
+# Add a progress bar for multiple cases
+if "score" not in st.session_state:
+    st.session_state.score = 0
+
+st.sidebar.write(f"🎯 Score: {st.session_state.score}")
+
+# Add a time limit for each case (optional)
+if "start_time" not in st.session_state:
+    st.session_state.start_time = datetime.now()
+
+time_limit = 120  # 2 minutes
+time_elapsed = (datetime.now() - st.session_state.start_time).seconds
+time_left = max(0, time_limit - time_elapsed)
+
+st.sidebar.write(f"⏳ Time Left: {time_left} seconds")
+
+if time_left <= 0:
+    st.error("⏰ Time's up! Case closed.")
+    st.session_state.new_game = True
+    st.rerun()
+
+# Add a storyline or narrative
+st.write("""
+### 🕵️‍♂️ The Case of the Elusive Suspect
+The city is in chaos! A series of crimes have been reported, and the police need your help to catch the suspects. 
+Use your statistical skills to analyze the data, interpret the clues, and identify the culprits. 
+Can you solve the case before time runs out?
+""")
+
+# Add this after initializing session state
+if "score" not in st.session_state:
+    st.session_state.score = 0
+
+st.sidebar.write(f"🎯 Score: {st.session_state.score}")
+
+# Add this after initializing session state
+if "start_time" not in st.session_state:
+    st.session_state.start_time = datetime.now()
+
+time_limit = 120  # 2 minutes
+time_elapsed = (datetime.now() - st.session_state.start_time).seconds
+time_left = max(0, time_limit - time_elapsed)
+
+st.sidebar.write(f"⏳ Time Left: {time_left} seconds")
+
+if time_left <= 0:
+    st.error("⏰ Time's up! Case closed.")
+    st.session_state.new_game = True
+    st.rerun()
 # Updated Nature-inspired Color Theme with original table styling
 st.markdown("""
     <style>
@@ -68,6 +127,15 @@ st.markdown("""
 
 st.title("🔍 Statistical Detective")
 st.write("*You are given the role of a Detective! Yay! Now, you have to use Statistics and Hints! Analyze the data, interpret the probabilities, and catch the suspect!*")
+
+# Add this after st.title
+st.write("""
+### 🕵️‍♂️ The Case of the Elusive Suspect
+The city is in chaos! A series of crimes have been reported, and the police need your help to catch the suspects. 
+Use your statistical skills to analyze the data, interpret the clues, and identify the culprits. 
+Can you solve the case before time runs out?
+""")
+
 
 # Game difficulty settings
 difficulty_levels = {"Easy": 3, "Hard": 2, "Expert": 1}
@@ -176,9 +244,11 @@ if st.button("Submit Findings", type="primary"):
     correct_age = guessed_age == selected_case["Suspect_Age"]
     correct_gender = guessed_gender == selected_case["Suspect_Gender"]
     
+    # Replace the success message with this
     if correct_location and correct_age and correct_gender:
         st.success("🎉 Case Solved! You've identified the suspect! You win a sweet treat :)")
         st.balloons()
+        st.session_state.score += 1  # Increase score
         st.session_state.new_game = True  # Reset the game after solving the case
     else:
         feedback = []
@@ -208,6 +278,8 @@ if st.session_state.new_game:
 st.caption(f"🔑 Difficulty: {difficulty} • 🔍 Attempts Left: {st.session_state.attempts}")
 
 # New case button
+# Replace the new case button logic with this
 if st.button("🔄 Start New Case"):
     st.session_state.new_game = True
+    st.session_state.start_time = datetime.now()  # Reset timer
     st.rerun()
