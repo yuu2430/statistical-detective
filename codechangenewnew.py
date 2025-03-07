@@ -95,7 +95,7 @@ def main():
 
     # Display case data
     st.header("📊 Crime Database")
-    st.dataframe(df.drop(columns=["Time_Minutes"])
+    st.dataframe(df.drop(columns=["Time_Minutes"]))
 
     # Investigation Section
     st.divider()
