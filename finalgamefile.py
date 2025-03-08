@@ -186,6 +186,7 @@ if st.button("Submit Guess", key="submit_guess"):
     
     if correct_location and correct_age and correct_gender:
         st.success(f"\U0001F389 Correct! You've solved the case. Reward: You win a sweet treat! yay!")
+        st.balloons()  # Show balloons for correct answer
     else:
         st.session_state.attempts -= 1
         feedback = []
