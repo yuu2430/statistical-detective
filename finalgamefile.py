@@ -7,6 +7,9 @@ from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from scipy import stats  # For confidence interval calculation
 
+# Set page configuration first
+st.set_page_config(layout="wide")  # Wide layout for better display
+
 # Debug: Ensure Streamlit is properly imported
 try:
     print(f"Streamlit version: {st.__version__}")
@@ -75,8 +78,6 @@ st.sidebar.write("""
 4. Submit your findings and see if you're correct!
 5. You have a limited number of attempts. Use them wisely!
 """)
-
-st.set_page_config(layout="wide")  # Wide layout for better display
 
 st.title("\U0001F50E Statistical Detective")
 st.write("Use statistics and hints! Analyze the data, interpret the probabilities, and catch the suspect!")
