@@ -159,7 +159,7 @@ confidence_percent_low = int(ci_low * 100)
 confidence_percent_high = int(ci_high * 100)
 
 st.write("\U0001F4CA Hints:")
-st.write(f"\U0001F575 Probability suggests the suspect is likely in their {age_group}s (~{confidence_percent_low}%-{confidence_percent_high}% confidence).")
+st.write(f"\U0001F575 Probability suggests the suspect is likely in their {age_group}s.")
 st.write(f"\U0001F4CD Location Analysis: {selected_case['Cluster_Hint']}")
 
 st.write(f"🔢 Attempts left: {st.session_state.attempts}")
