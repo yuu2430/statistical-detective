@@ -9,6 +9,66 @@ from scipy import stats  # For confidence interval calculation
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
+# Custom CSS for styling
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #f5f0e6;
+        color: #4f2022;
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #9a816b !important;
+        color: #ffffff !important;
+        border-radius: 5px !important;
+    }
+    .stSlider div[data-testid="stThumbValue"] {
+        color: #4f2022 !important;
+    }
+    .stSlider div[data-baseweb="slider"] {
+        background-color: transparent;
+    }
+    .stRadio div[role="radiogroup"] {
+        background-color: #ffffff !important;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #9a816b;
+    }
+    .stButton>button {
+        background-color: #65b1df !important;
+        color: #ffffff !important;
+        border-radius: 8px;
+        padding: 10px 24px;
+        border: 2px solid #4f2022;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #4f2022 !important;
+        transform: scale(1.05);
+    }
+    .stSuccess {
+        background-color: #acdb01 !important;
+        color: #4f2022 !important;
+        border: 1px solid #9a816b;
+    }
+    .stError {
+        background-color: #9a816b !important;
+        color: #ffffff !important;
+        border: 1px solid #4f2022;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Sidebar for game instructions and status
+st.sidebar.header("How to Play")
+st.sidebar.write("""
+1. Select a difficulty level.
+2. Analyze the crime data and use the hints provided.
+3. Guess the suspect's location, age, and gender.
+4. Submit your findings and see if you're correct!
+5. You have a limited number of attempts. Use them wisely!
+""")
+
 st.set_page_config(layout="wide")  # Wide layout for better display
 
 st.title("\U0001F50E Statistical Detective")
