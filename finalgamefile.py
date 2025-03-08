@@ -7,6 +7,13 @@ from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from scipy import stats  # For confidence interval calculation
 
+# Debug: Ensure Streamlit is properly imported
+try:
+    print(f"Streamlit version: {st.__version__}")
+except NameError:
+    st.error("Streamlit is not properly imported. Please ensure you're running this script with `streamlit run`.")
+    st.stop()
+
 os.environ["OMP_NUM_THREADS"] = "1"
 
 # Custom CSS for styling
